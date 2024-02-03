@@ -1,0 +1,7 @@
+[workspace]
+members = ["wq_server", "wq_server_server_sdk", "wq_server_server"]
+# By setting `wq_server_server` as the default member, `cargo run` will default to running the server binary
+# when executed from the root of the workspace.
+# Otherwise, you would have to use `cargo run --bin api` to run the server binary.
+default-members = ["wq_server_server"]
+resolver = "2"
