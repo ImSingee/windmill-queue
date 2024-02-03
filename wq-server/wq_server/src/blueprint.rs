@@ -1,5 +1,5 @@
 use pavex::blueprint::constructor::CloningStrategy;
-use pavex::blueprint::{constructor::Lifecycle, router::GET, Blueprint};
+use pavex::blueprint::{constructor::Lifecycle, router::{GET, POST}, Blueprint};
 use pavex::f;
 use pavex::kit::ApiKit;
 
@@ -11,8 +11,11 @@ pub fn blueprint() -> Blueprint {
 
     add_telemetry_middleware(&mut bp);
 
+    bp.constructor(f!(crate::app::App::pavex_task_sender), Lifecycle::Singleton);
+
     bp.route(GET, "/", f!(crate::routes::root));
     bp.route(GET, "/api/ping", f!(crate::routes::status::ping));
+    bp.route(POST, "/demo", f!(crate::routes::demo::new_demo_task));
     bp
 }
 
@@ -22,7 +25,7 @@ fn add_telemetry_middleware(bp: &mut Blueprint) {
         f!(crate::telemetry::RootSpan::new),
         Lifecycle::RequestScoped,
     )
-    .cloning(CloningStrategy::CloneIfNecessary);
+        .cloning(CloningStrategy::CloneIfNecessary);
 
     bp.wrap(f!(crate::telemetry::logger));
 }

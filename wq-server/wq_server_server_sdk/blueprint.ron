@@ -132,7 +132,7 @@
                     import_path: "crate::telemetry::RootSpan::new",
                 ),
                 location: (
-                    line: 21,
+                    line: 24,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
@@ -148,11 +148,27 @@
                     import_path: "crate::telemetry::logger",
                 ),
                 location: (
-                    line: 27,
+                    line: 30,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
             ),
+            error_handler: None,
+        )),
+        Constructor((
+            constructor: (
+                callable: (
+                    registered_at: "wq_server",
+                    import_path: "crate::app::App::pavex_task_sender",
+                ),
+                location: (
+                    line: 14,
+                    column: 8,
+                    file: "wq_server/src/blueprint.rs",
+                ),
+            ),
+            lifecycle: Singleton,
+            cloning_strategy: None,
             error_handler: None,
         )),
         Route((
@@ -166,7 +182,7 @@
                     import_path: "crate::routes::root",
                 ),
                 location: (
-                    line: 14,
+                    line: 16,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
@@ -184,7 +200,25 @@
                     import_path: "crate::routes::status::ping",
                 ),
                 location: (
-                    line: 15,
+                    line: 17,
+                    column: 8,
+                    file: "wq_server/src/blueprint.rs",
+                ),
+            ),
+            error_handler: None,
+        )),
+        Route((
+            path: "/demo",
+            method_guard: Some([
+                "POST",
+            ]),
+            request_handler: (
+                callable: (
+                    registered_at: "wq_server",
+                    import_path: "crate::routes::demo::new_demo_task",
+                ),
+                location: (
+                    line: 18,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),

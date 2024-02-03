@@ -4,12 +4,14 @@
 extern crate alloc;
 struct ServerState {
     router: pavex_matchit::Router<u32>,
-    #[allow(dead_code)]
     application_state: ApplicationState,
 }
-pub struct ApplicationState {}
+pub struct ApplicationState {
+    s0: tokio::sync::mpsc::Sender<wq_server::app::Task>,
+}
 pub async fn build_application_state() -> crate::ApplicationState {
-    crate::ApplicationState {}
+    let v0 = wq_server::app::App::pavex_task_sender();
+    crate::ApplicationState { s0: v0 }
 }
 pub fn run(
     server_builder: pavex::server::Server,
@@ -25,6 +27,7 @@ fn build_router() -> pavex_matchit::Router<u32> {
     let mut router = pavex_matchit::Router::new();
     router.insert("/", 0u32).unwrap();
     router.insert("/api/ping", 1u32).unwrap();
+    router.insert("/demo", 2u32).unwrap();
     router
 }
 async fn route_request(
@@ -45,7 +48,7 @@ async fn route_request(
             let matched_route_template = pavex::request::path::MatchedPathPattern::new(
                 "*",
             );
-            return route_2::middleware_0(
+            return route_3::middleware_0(
                     matched_route_template,
                     &allowed_methods,
                     &request_head,
@@ -72,7 +75,7 @@ async fn route_request(
                             pavex::http::Method::GET,
                         ])
                         .into();
-                    route_2::middleware_0(
+                    route_3::middleware_0(
                             matched_route_template,
                             &allowed_methods,
                             &request_head,
@@ -94,7 +97,35 @@ async fn route_request(
                             pavex::http::Method::GET,
                         ])
                         .into();
+                    route_3::middleware_0(
+                            matched_route_template,
+                            &allowed_methods,
+                            &request_head,
+                        )
+                        .await
+                }
+            }
+        }
+        2u32 => {
+            let matched_route_template = pavex::request::path::MatchedPathPattern::new(
+                "/demo",
+            );
+            match &request_head.method {
+                &pavex::http::Method::POST => {
                     route_2::middleware_0(
+                            matched_route_template,
+                            request_body,
+                            server_state.application_state.s0.clone(),
+                            &request_head,
+                        )
+                        .await
+                }
+                _ => {
+                    let allowed_methods: pavex::router::AllowedMethods = pavex::router::MethodAllowList::from_iter([
+                            pavex::http::Method::POST,
+                        ])
+                        .into();
+                    route_3::middleware_0(
                             matched_route_template,
                             &allowed_methods,
                             &request_head,
@@ -175,11 +206,89 @@ pub mod route_1 {
 pub mod route_2 {
     pub async fn middleware_0(
         v0: pavex::request::path::MatchedPathPattern,
+        v1: pavex::request::body::RawIncomingBody,
+        v2: tokio::sync::mpsc::Sender<wq_server::app::Task>,
+        v3: &pavex::request::RequestHead,
+    ) -> pavex::response::Response {
+        let v4 = wq_server::telemetry::RootSpan::new(v3, v0);
+        let v5 = crate::route_2::Next0 {
+            s_0: v2,
+            s_1: v1,
+            s_2: v3,
+            next: handler,
+        };
+        let v6 = pavex::middleware::Next::new(v5);
+        wq_server::telemetry::logger(v6, v4).await
+    }
+    pub async fn handler(
+        v0: tokio::sync::mpsc::Sender<wq_server::app::Task>,
+        v1: pavex::request::body::RawIncomingBody,
+        v2: &pavex::request::RequestHead,
+    ) -> pavex::response::Response {
+        let v3 = <pavex::request::body::BodySizeLimit as std::default::Default>::default();
+        let v4 = pavex::request::body::BufferedBody::extract(v2, v1, v3).await;
+        let v5 = match v4 {
+            Ok(ok) => ok,
+            Err(v5) => {
+                return {
+                    let v6 = pavex::request::body::errors::ExtractBufferedBodyError::into_response(
+                        &v5,
+                    );
+                    <pavex::response::Response as pavex::response::IntoResponse>::into_response(
+                        v6,
+                    )
+                };
+            }
+        };
+        let v6 = pavex::request::body::JsonBody::extract(v2, &v5);
+        let v7 = match v6 {
+            Ok(ok) => ok,
+            Err(v7) => {
+                return {
+                    let v8 = pavex::request::body::errors::ExtractJsonBodyError::into_response(
+                        &v7,
+                    );
+                    <pavex::response::Response as pavex::response::IntoResponse>::into_response(
+                        v8,
+                    )
+                };
+            }
+        };
+        let v8 = wq_server::routes::demo::new_demo_task(v7, v0).await;
+        <pavex::response::Response as pavex::response::IntoResponse>::into_response(v8)
+    }
+    pub struct Next0<'a, T>
+    where
+        T: std::future::Future<Output = pavex::response::Response>,
+    {
+        s_0: tokio::sync::mpsc::Sender<wq_server::app::Task>,
+        s_1: pavex::request::body::RawIncomingBody,
+        s_2: &'a pavex::request::RequestHead,
+        next: fn(
+            tokio::sync::mpsc::Sender<wq_server::app::Task>,
+            pavex::request::body::RawIncomingBody,
+            &'a pavex::request::RequestHead,
+        ) -> T,
+    }
+    impl<'a, T> std::future::IntoFuture for Next0<'a, T>
+    where
+        T: std::future::Future<Output = pavex::response::Response>,
+    {
+        type Output = pavex::response::Response;
+        type IntoFuture = T;
+        fn into_future(self) -> Self::IntoFuture {
+            (self.next)(self.s_0, self.s_1, self.s_2)
+        }
+    }
+}
+pub mod route_3 {
+    pub async fn middleware_0(
+        v0: pavex::request::path::MatchedPathPattern,
         v1: &pavex::router::AllowedMethods,
         v2: &pavex::request::RequestHead,
     ) -> pavex::response::Response {
         let v3 = wq_server::telemetry::RootSpan::new(v2, v0);
-        let v4 = crate::route_2::Next0 {
+        let v4 = crate::route_3::Next0 {
             s_0: v1,
             next: handler,
         };

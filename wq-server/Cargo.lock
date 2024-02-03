@@ -1954,12 +1954,14 @@ dependencies = [
 name = "wq_server"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "cargo_px_env",
  "pavex",
  "pavex_cli_client",
  "serde",
  "serde-aux",
  "serde_json",
+ "tokio",
  "tracing",
 ]
 
@@ -1991,6 +1993,7 @@ dependencies = [
  "pavex",
  "pavex_matchit",
  "thiserror",
+ "tokio",
  "wq_server",
 ]
 
