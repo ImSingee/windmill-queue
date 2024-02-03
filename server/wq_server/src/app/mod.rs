@@ -1,5 +1,6 @@
 mod task;
 mod locker;
+pub mod event;
 
 use tokio::sync::mpsc;
 use anyhow::Result;

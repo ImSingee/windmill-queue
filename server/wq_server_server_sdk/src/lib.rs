@@ -26,8 +26,9 @@ pub fn run(
 fn build_router() -> pavex_matchit::Router<u32> {
     let mut router = pavex_matchit::Router::new();
     router.insert("/", 0u32).unwrap();
-    router.insert("/api/ping", 1u32).unwrap();
-    router.insert("/demo", 2u32).unwrap();
+    router.insert("/api/events/:queue", 1u32).unwrap();
+    router.insert("/api/ping", 2u32).unwrap();
+    router.insert("/demo", 3u32).unwrap();
     router
 }
 async fn route_request(
@@ -48,7 +49,7 @@ async fn route_request(
             let matched_route_template = pavex::request::path::MatchedPathPattern::new(
                 "*",
             );
-            return route_3::middleware_0(
+            return route_4::middleware_0(
                     matched_route_template,
                     &allowed_methods,
                     &request_head,
@@ -75,7 +76,7 @@ async fn route_request(
                             pavex::http::Method::GET,
                         ])
                         .into();
-                    route_3::middleware_0(
+                    route_4::middleware_0(
                             matched_route_template,
                             &allowed_methods,
                             &request_head,
@@ -85,6 +86,34 @@ async fn route_request(
             }
         }
         1u32 => {
+            let matched_route_template = pavex::request::path::MatchedPathPattern::new(
+                "/api/events/:queue",
+            );
+            match &request_head.method {
+                &pavex::http::Method::POST => {
+                    route_3::middleware_0(
+                            matched_route_template,
+                            url_params,
+                            request_body,
+                            &request_head,
+                        )
+                        .await
+                }
+                _ => {
+                    let allowed_methods: pavex::router::AllowedMethods = pavex::router::MethodAllowList::from_iter([
+                            pavex::http::Method::POST,
+                        ])
+                        .into();
+                    route_4::middleware_0(
+                            matched_route_template,
+                            &allowed_methods,
+                            &request_head,
+                        )
+                        .await
+                }
+            }
+        }
+        2u32 => {
             let matched_route_template = pavex::request::path::MatchedPathPattern::new(
                 "/api/ping",
             );
@@ -97,7 +126,7 @@ async fn route_request(
                             pavex::http::Method::GET,
                         ])
                         .into();
-                    route_3::middleware_0(
+                    route_4::middleware_0(
                             matched_route_template,
                             &allowed_methods,
                             &request_head,
@@ -106,7 +135,7 @@ async fn route_request(
                 }
             }
         }
-        2u32 => {
+        3u32 => {
             let matched_route_template = pavex::request::path::MatchedPathPattern::new(
                 "/demo",
             );
@@ -125,7 +154,7 @@ async fn route_request(
                             pavex::http::Method::POST,
                         ])
                         .into();
-                    route_3::middleware_0(
+                    route_4::middleware_0(
                             matched_route_template,
                             &allowed_methods,
                             &request_head,
@@ -284,11 +313,103 @@ pub mod route_2 {
 pub mod route_3 {
     pub async fn middleware_0(
         v0: pavex::request::path::MatchedPathPattern,
+        v1: pavex::request::path::RawPathParams<'_, '_>,
+        v2: pavex::request::body::RawIncomingBody,
+        v3: &pavex::request::RequestHead,
+    ) -> pavex::response::Response {
+        let v4 = wq_server::telemetry::RootSpan::new(v3, v0);
+        let v5 = crate::route_3::Next0 {
+            s_0: v2,
+            s_1: v1,
+            s_2: v3,
+            next: handler,
+        };
+        let v6 = pavex::middleware::Next::new(v5);
+        wq_server::telemetry::logger(v6, v4).await
+    }
+    pub async fn handler(
+        v0: pavex::request::body::RawIncomingBody,
+        v1: pavex::request::path::RawPathParams<'_, '_>,
+        v2: &pavex::request::RequestHead,
+    ) -> pavex::response::Response {
+        let v3 = <pavex::request::body::BodySizeLimit as std::default::Default>::default();
+        let v4 = pavex::request::body::BufferedBody::extract(v2, v0, v3).await;
+        let v5 = match v4 {
+            Ok(ok) => ok,
+            Err(v5) => {
+                return {
+                    let v6 = pavex::request::body::errors::ExtractBufferedBodyError::into_response(
+                        &v5,
+                    );
+                    <pavex::response::Response as pavex::response::IntoResponse>::into_response(
+                        v6,
+                    )
+                };
+            }
+        };
+        let v6 = pavex::request::body::JsonBody::extract(v2, &v5);
+        let v7 = match v6 {
+            Ok(ok) => ok,
+            Err(v7) => {
+                return {
+                    let v8 = pavex::request::body::errors::ExtractJsonBodyError::into_response(
+                        &v7,
+                    );
+                    <pavex::response::Response as pavex::response::IntoResponse>::into_response(
+                        v8,
+                    )
+                };
+            }
+        };
+        let v8 = pavex::request::path::PathParams::extract(v1);
+        let v9 = match v8 {
+            Ok(ok) => ok,
+            Err(v9) => {
+                return {
+                    let v10 = pavex::request::path::errors::ExtractPathParamsError::into_response(
+                        &v9,
+                    );
+                    <pavex::response::Response as pavex::response::IntoResponse>::into_response(
+                        v10,
+                    )
+                };
+            }
+        };
+        let v10 = wq_server::routes::events::ingest_events(&v9, v7).await;
+        <pavex::response::Response as pavex::response::IntoResponse>::into_response(v10)
+    }
+    pub struct Next0<'a, 'b, 'c, T>
+    where
+        T: std::future::Future<Output = pavex::response::Response>,
+    {
+        s_0: pavex::request::body::RawIncomingBody,
+        s_1: pavex::request::path::RawPathParams<'a, 'b>,
+        s_2: &'c pavex::request::RequestHead,
+        next: fn(
+            pavex::request::body::RawIncomingBody,
+            pavex::request::path::RawPathParams<'a, 'b>,
+            &'c pavex::request::RequestHead,
+        ) -> T,
+    }
+    impl<'a, 'b, 'c, T> std::future::IntoFuture for Next0<'a, 'b, 'c, T>
+    where
+        T: std::future::Future<Output = pavex::response::Response>,
+    {
+        type Output = pavex::response::Response;
+        type IntoFuture = T;
+        fn into_future(self) -> Self::IntoFuture {
+            (self.next)(self.s_0, self.s_1, self.s_2)
+        }
+    }
+}
+pub mod route_4 {
+    pub async fn middleware_0(
+        v0: pavex::request::path::MatchedPathPattern,
         v1: &pavex::router::AllowedMethods,
         v2: &pavex::request::RequestHead,
     ) -> pavex::response::Response {
         let v3 = wq_server::telemetry::RootSpan::new(v2, v0);
-        let v4 = crate::route_3::Next0 {
+        let v4 = crate::route_4::Next0 {
             s_0: v1,
             next: handler,
         };

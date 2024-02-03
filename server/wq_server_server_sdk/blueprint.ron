@@ -132,7 +132,7 @@
                     import_path: "crate::telemetry::RootSpan::new",
                 ),
                 location: (
-                    line: 24,
+                    line: 25,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
@@ -148,7 +148,7 @@
                     import_path: "crate::telemetry::logger",
                 ),
                 location: (
-                    line: 30,
+                    line: 31,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
@@ -219,6 +219,24 @@
                 ),
                 location: (
                     line: 18,
+                    column: 8,
+                    file: "wq_server/src/blueprint.rs",
+                ),
+            ),
+            error_handler: None,
+        )),
+        Route((
+            path: "/api/events/:queue",
+            method_guard: Some([
+                "POST",
+            ]),
+            request_handler: (
+                callable: (
+                    registered_at: "wq_server",
+                    import_path: "crate::routes::events::ingest_events",
+                ),
+                location: (
+                    line: 19,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
