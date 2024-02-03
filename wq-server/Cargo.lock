@@ -1959,6 +1959,7 @@ dependencies = [
  "pavex_cli_client",
  "serde",
  "serde-aux",
+ "serde_json",
  "tracing",
 ]
 
@@ -1984,6 +1985,14 @@ dependencies = [
 [[package]]
 name = "wq_server_server_sdk"
 version = "0.1.0"
+dependencies = [
+ "http 1.0.0",
+ "hyper 1.1.0",
+ "pavex",
+ "pavex_matchit",
+ "thiserror",
+ "wq_server",
+]
 
 [[package]]
 name = "yansi"

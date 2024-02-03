@@ -11,6 +11,7 @@ pub fn blueprint() -> Blueprint {
 
     add_telemetry_middleware(&mut bp);
 
+    bp.route(GET, "/", f!(crate::routes::root));
     bp.route(GET, "/api/ping", f!(crate::routes::status::ping));
     bp
 }
