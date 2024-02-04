@@ -1,6 +1,5 @@
-use std::env;
 use apalis::postgres::PostgresStorage;
-use apalis::prelude::{Job, JobContext, Monitor, Storage, WithStorage, WorkerBuilder, WorkerFactoryFn};
+use apalis::prelude::{Job, JobContext, Monitor, WithStorage, WorkerBuilder, WorkerFactoryFn};
 use serde::{Deserialize, Serialize};
 use crate::app::event::EventWithMeta;
 use crate::configuration::Config;
@@ -16,7 +15,7 @@ impl Job for NewEvents {
 
 pub type NewEventsProducer = PostgresStorage<NewEvents>;
 
-async fn on_new_events(NewEvents { events_with_meta }: NewEvents, ctx: JobContext) {
+async fn on_new_events(NewEvents { events_with_meta }: NewEvents, _ctx: JobContext) {
     // TODO
 
     println!("Received {} new events", events_with_meta.len());

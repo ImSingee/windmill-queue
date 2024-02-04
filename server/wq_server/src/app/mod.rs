@@ -6,7 +6,6 @@ pub mod queue;
 use tokio::sync::mpsc;
 use anyhow::Result;
 pub use task::Task;
-use crate::configuration::DatabaseConfig;
 
 pub struct App {
     task_tx: mpsc::Sender<Task>,
