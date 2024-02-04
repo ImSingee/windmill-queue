@@ -11,6 +11,7 @@ generator_name = "bp"
 clippy = { all = "allow" }
 
 [dependencies]
+apalis_sql = { version = "0.4.9", package = "apalis-sql" }
 http = { version = "1.0.0", package = "http" }
 hyper = { version = "1.1.0", package = "hyper" }
 pavex = { version = "0.1.13", package = "pavex" }

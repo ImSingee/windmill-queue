@@ -1,3 +1,4 @@
+use apalis::prelude::Storage;
 use pavex::http::StatusCode;
 use pavex::request::body::JsonBody;
 use pavex::request::path::PathParams;
@@ -7,6 +8,7 @@ use serde_json::json;
 use thiserror::Error;
 use uuid::Uuid;
 use crate::app::event::{Event, EventWithMeta, EventMeta};
+use crate::app::queue::{NewEvents, NewEventsProducer};
 use crate::utils::pavex::{json_response, json_response_with_status};
 
 #[PathParams]
@@ -62,7 +64,7 @@ impl InEventWithMeta {
     }
 }
 
-pub async fn ingest_events(PathParams(Params { queue }): &PathParams<Params>, JsonBody(events): JsonBody<Vec<InEventWithMeta>>) -> Response {
+pub async fn ingest_events(PathParams(Params { queue }): &PathParams<Params>, JsonBody(events): JsonBody<Vec<InEventWithMeta>>, mut producer: NewEventsProducer) -> Response {
     let events = events.into_iter().map(|event| event.into_event(&queue)).collect::<Result<Vec<_>, _>>();
     let events = match events {
         Ok(events) => events,
@@ -71,8 +73,9 @@ pub async fn ingest_events(PathParams(Params { queue }): &PathParams<Params>, Js
         }
     };
 
-    for event in events {
-        println!("Ingest Event: {:?}", event);
+    let result = producer.push(NewEvents { events_with_meta: events }).await;
+    if let Err(err) = result {
+        return json_response_with_status(StatusCode::INTERNAL_SERVER_ERROR, json!({"success": false, "error": err.to_string()}));
     }
 
     json_response(json!({"success": true}))

@@ -12,6 +12,7 @@ pub fn blueprint() -> Blueprint {
     add_telemetry_middleware(&mut bp);
 
     bp.constructor(f!(crate::app::App::pavex_task_sender), Lifecycle::Singleton);
+    bp.constructor(f!(crate::app::queue::new), Lifecycle::Singleton);
 
     bp.route(GET, "/", f!(crate::routes::root));
     bp.route(GET, "/api/ping", f!(crate::routes::status::ping));

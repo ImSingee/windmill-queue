@@ -8,10 +8,17 @@ struct ServerState {
 }
 pub struct ApplicationState {
     s0: tokio::sync::mpsc::Sender<wq_server::app::Task>,
+    s1: apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
 }
-pub async fn build_application_state() -> crate::ApplicationState {
-    let v0 = wq_server::app::App::pavex_task_sender();
-    crate::ApplicationState { s0: v0 }
+pub async fn build_application_state(
+    v0: wq_server::configuration::Config,
+) -> crate::ApplicationState {
+    let v1 = wq_server::app::queue::new(v0).await;
+    let v2 = wq_server::app::App::pavex_task_sender();
+    crate::ApplicationState {
+        s0: v2,
+        s1: v1,
+    }
 }
 pub fn run(
     server_builder: pavex::server::Server,
@@ -95,6 +102,7 @@ async fn route_request(
                             matched_route_template,
                             url_params,
                             request_body,
+                            server_state.application_state.s1.clone(),
                             &request_head,
                         )
                         .await
@@ -315,77 +323,82 @@ pub mod route_3 {
         v0: pavex::request::path::MatchedPathPattern,
         v1: pavex::request::path::RawPathParams<'_, '_>,
         v2: pavex::request::body::RawIncomingBody,
-        v3: &pavex::request::RequestHead,
+        v3: apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
+        v4: &pavex::request::RequestHead,
     ) -> pavex::response::Response {
-        let v4 = wq_server::telemetry::RootSpan::new(v3, v0);
-        let v5 = crate::route_3::Next0 {
-            s_0: v2,
-            s_1: v1,
-            s_2: v3,
+        let v5 = wq_server::telemetry::RootSpan::new(v4, v0);
+        let v6 = crate::route_3::Next0 {
+            s_0: v3,
+            s_1: v2,
+            s_2: v1,
+            s_3: v4,
             next: handler,
         };
-        let v6 = pavex::middleware::Next::new(v5);
-        wq_server::telemetry::logger(v6, v4).await
+        let v7 = pavex::middleware::Next::new(v6);
+        wq_server::telemetry::logger(v7, v5).await
     }
     pub async fn handler(
-        v0: pavex::request::body::RawIncomingBody,
-        v1: pavex::request::path::RawPathParams<'_, '_>,
-        v2: &pavex::request::RequestHead,
+        v0: apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
+        v1: pavex::request::body::RawIncomingBody,
+        v2: pavex::request::path::RawPathParams<'_, '_>,
+        v3: &pavex::request::RequestHead,
     ) -> pavex::response::Response {
-        let v3 = <pavex::request::body::BodySizeLimit as std::default::Default>::default();
-        let v4 = pavex::request::body::BufferedBody::extract(v2, v0, v3).await;
-        let v5 = match v4 {
+        let v4 = <pavex::request::body::BodySizeLimit as std::default::Default>::default();
+        let v5 = pavex::request::body::BufferedBody::extract(v3, v1, v4).await;
+        let v6 = match v5 {
             Ok(ok) => ok,
-            Err(v5) => {
+            Err(v6) => {
                 return {
-                    let v6 = pavex::request::body::errors::ExtractBufferedBodyError::into_response(
-                        &v5,
+                    let v7 = pavex::request::body::errors::ExtractBufferedBodyError::into_response(
+                        &v6,
                     );
                     <pavex::response::Response as pavex::response::IntoResponse>::into_response(
-                        v6,
+                        v7,
                     )
                 };
             }
         };
-        let v6 = pavex::request::body::JsonBody::extract(v2, &v5);
-        let v7 = match v6 {
+        let v7 = pavex::request::body::JsonBody::extract(v3, &v6);
+        let v8 = match v7 {
             Ok(ok) => ok,
-            Err(v7) => {
+            Err(v8) => {
                 return {
-                    let v8 = pavex::request::body::errors::ExtractJsonBodyError::into_response(
-                        &v7,
+                    let v9 = pavex::request::body::errors::ExtractJsonBodyError::into_response(
+                        &v8,
                     );
                     <pavex::response::Response as pavex::response::IntoResponse>::into_response(
-                        v8,
+                        v9,
                     )
                 };
             }
         };
-        let v8 = pavex::request::path::PathParams::extract(v1);
-        let v9 = match v8 {
+        let v9 = pavex::request::path::PathParams::extract(v2);
+        let v10 = match v9 {
             Ok(ok) => ok,
-            Err(v9) => {
+            Err(v10) => {
                 return {
-                    let v10 = pavex::request::path::errors::ExtractPathParamsError::into_response(
-                        &v9,
+                    let v11 = pavex::request::path::errors::ExtractPathParamsError::into_response(
+                        &v10,
                     );
                     <pavex::response::Response as pavex::response::IntoResponse>::into_response(
-                        v10,
+                        v11,
                     )
                 };
             }
         };
-        let v10 = wq_server::routes::events::ingest_events(&v9, v7).await;
-        <pavex::response::Response as pavex::response::IntoResponse>::into_response(v10)
+        let v11 = wq_server::routes::events::ingest_events(&v10, v8, v0).await;
+        <pavex::response::Response as pavex::response::IntoResponse>::into_response(v11)
     }
     pub struct Next0<'a, 'b, 'c, T>
     where
         T: std::future::Future<Output = pavex::response::Response>,
     {
-        s_0: pavex::request::body::RawIncomingBody,
-        s_1: pavex::request::path::RawPathParams<'a, 'b>,
-        s_2: &'c pavex::request::RequestHead,
+        s_0: apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
+        s_1: pavex::request::body::RawIncomingBody,
+        s_2: pavex::request::path::RawPathParams<'a, 'b>,
+        s_3: &'c pavex::request::RequestHead,
         next: fn(
+            apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
             pavex::request::body::RawIncomingBody,
             pavex::request::path::RawPathParams<'a, 'b>,
             &'c pavex::request::RequestHead,
@@ -398,7 +411,7 @@ pub mod route_3 {
         type Output = pavex::response::Response;
         type IntoFuture = T;
         fn into_future(self) -> Self::IntoFuture {
-            (self.next)(self.s_0, self.s_1, self.s_2)
+            (self.next)(self.s_0, self.s_1, self.s_2, self.s_3)
         }
     }
 }

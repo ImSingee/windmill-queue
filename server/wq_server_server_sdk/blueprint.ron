@@ -132,7 +132,7 @@
                     import_path: "crate::telemetry::RootSpan::new",
                 ),
                 location: (
-                    line: 25,
+                    line: 26,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
@@ -148,7 +148,7 @@
                     import_path: "crate::telemetry::logger",
                 ),
                 location: (
-                    line: 31,
+                    line: 32,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
@@ -171,6 +171,22 @@
             cloning_strategy: None,
             error_handler: None,
         )),
+        Constructor((
+            constructor: (
+                callable: (
+                    registered_at: "wq_server",
+                    import_path: "crate::app::queue::new",
+                ),
+                location: (
+                    line: 15,
+                    column: 8,
+                    file: "wq_server/src/blueprint.rs",
+                ),
+            ),
+            lifecycle: Singleton,
+            cloning_strategy: None,
+            error_handler: None,
+        )),
         Route((
             path: "/",
             method_guard: Some([
@@ -182,7 +198,7 @@
                     import_path: "crate::routes::root",
                 ),
                 location: (
-                    line: 16,
+                    line: 17,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
@@ -200,7 +216,7 @@
                     import_path: "crate::routes::status::ping",
                 ),
                 location: (
-                    line: 17,
+                    line: 18,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
@@ -218,7 +234,7 @@
                     import_path: "crate::routes::demo::new_demo_task",
                 ),
                 location: (
-                    line: 18,
+                    line: 19,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),
@@ -236,7 +252,7 @@
                     import_path: "crate::routes::events::ingest_events",
                 ),
                 location: (
-                    line: 19,
+                    line: 20,
                     column: 8,
                     file: "wq_server/src/blueprint.rs",
                 ),

@@ -30,8 +30,7 @@ async fn _main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
 
     let config = load_configuration(None)?;
-    let application_state = build_application_state()
-        .await;
+    let application_state = build_application_state(config.clone()).await;
 
     let tcp_listener = config
         .server
