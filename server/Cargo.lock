@@ -1449,9 +1449,9 @@ checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
 
 [[package]]
 name = "pavex"
-version = "0.1.13"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58aa783ae844a138ce25e00aac4781cbeb14fb3276afa85fe18b4a35a08f7acd"
+checksum = "92a4fe0199391b8bbe45d0096a4d81fceaf01815f4d7fc9e9470290c939265f4"
 dependencies = [
  "anyhow",
  "bytes",
@@ -1470,6 +1470,7 @@ dependencies = [
  "pavex_matchit",
  "pavex_reflection",
  "percent-encoding",
+ "persist_if_changed",
  "pin-project-lite",
  "ron",
  "serde",
@@ -1486,9 +1487,9 @@ dependencies = [
 
 [[package]]
 name = "pavex_bp_schema"
-version = "0.1.13"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ae933fe387de4e45d705732b00c70cda1228fab8851a390ddfcf78654094f1b"
+checksum = "969072a1d7b01e2200077bd91bd8e1b10a9b4e3750bfc099e68dba0cb82b3e65"
 dependencies = [
  "pavex_reflection",
  "serde",
@@ -1507,9 +1508,9 @@ dependencies = [
 
 [[package]]
 name = "pavex_macros"
-version = "0.1.13"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1a77626793a4bc3eb3b9e8dd071bc386640d03b064755ce9866407c4ca9a8f3"
+checksum = "9573dc1c52e7cd8d550b9fc02be3e8b44d60271f8b6fe94659e931efc53cd76b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1524,9 +1525,9 @@ checksum = "77b9753b03381fd8856966146c4d626d9a8507901c1bcdfbc41df03deea551fc"
 
 [[package]]
 name = "pavex_reflection"
-version = "0.1.13"
+version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a12cacbf8035a5e1db4d3faa7cdb7cbdaef69633d2fe115dac33503722221cf8"
+checksum = "f5d71744d2afc958c88878262686cc44f05aa45c73808b6c74200ec0e56c528d"
 dependencies = [
  "serde",
 ]
@@ -1568,6 +1569,18 @@ name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
+
+[[package]]
+name = "persist_if_changed"
+version = "0.1.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c3d928fba81fcc19bbed2f0b5a87c292abaf34f3ab5a012e1d354b5809d291f"
+dependencies = [
+ "anyhow",
+ "fs-err",
+ "sha2",
+ "tracing",
+]
 
 [[package]]
 name = "pin-project"

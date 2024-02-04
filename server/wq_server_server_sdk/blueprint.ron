@@ -14,7 +14,7 @@
                 location: (
                     line: 105,
                     column: 9,
-                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.13/src/request/path/path_params.rs",
+                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.16/src/request/path/path_params.rs",
                 ),
             ),
             lifecycle: RequestScoped,
@@ -27,7 +27,7 @@
                 location: (
                     line: 109,
                     column: 10,
-                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.13/src/request/path/path_params.rs",
+                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.16/src/request/path/path_params.rs",
                 ),
             )),
         )),
@@ -40,7 +40,7 @@
                 location: (
                     line: 70,
                     column: 9,
-                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.13/src/request/query/query_params.rs",
+                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.16/src/request/query/query_params.rs",
                 ),
             ),
             lifecycle: RequestScoped,
@@ -53,7 +53,7 @@
                 location: (
                     line: 74,
                     column: 10,
-                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.13/src/request/query/query_params.rs",
+                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.16/src/request/query/query_params.rs",
                 ),
             )),
         )),
@@ -66,7 +66,7 @@
                 location: (
                     line: 90,
                     column: 9,
-                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.13/src/request/body/json.rs",
+                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.16/src/request/body/json.rs",
                 ),
             ),
             lifecycle: RequestScoped,
@@ -79,7 +79,7 @@
                 location: (
                     line: 94,
                     column: 10,
-                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.13/src/request/body/json.rs",
+                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.16/src/request/body/json.rs",
                 ),
             )),
         )),
@@ -92,7 +92,7 @@
                 location: (
                     line: 89,
                     column: 9,
-                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.13/src/request/body/buffered_body.rs",
+                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.16/src/request/body/buffered_body.rs",
                 ),
             ),
             lifecycle: RequestScoped,
@@ -105,7 +105,7 @@
                 location: (
                     line: 93,
                     column: 10,
-                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.13/src/request/body/buffered_body.rs",
+                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.16/src/request/body/buffered_body.rs",
                 ),
             )),
         )),
@@ -118,7 +118,7 @@
                 location: (
                     line: 30,
                     column: 9,
-                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.13/src/request/body/limit.rs",
+                    file: "/Users/wangxuan/.cargo/registry/src/index.crates.io-6f17d22bba15001f/pavex-0.1.16/src/request/body/limit.rs",
                 ),
             ),
             lifecycle: RequestScoped,

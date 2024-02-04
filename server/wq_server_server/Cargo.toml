@@ -9,7 +9,7 @@ name = "api"
 
 [dependencies]
 anyhow = "1"
-pavex = { version = "0.1.13" }
+pavex = { version = "0.1.16" }
 tokio = { version = "1", features = ["full"] }
 wq_server_server_sdk = { path = "../wq_server_server_sdk" }
 wq_server = { path = "../wq_server" }

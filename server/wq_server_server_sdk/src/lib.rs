@@ -57,8 +57,8 @@ async fn route_request(
                 "*",
             );
             return route_4::middleware_0(
-                    matched_route_template,
                     &allowed_methods,
+                    matched_route_template,
                     &request_head,
                 )
                 .await;
@@ -84,8 +84,8 @@ async fn route_request(
                         ])
                         .into();
                     route_4::middleware_0(
-                            matched_route_template,
                             &allowed_methods,
+                            matched_route_template,
                             &request_head,
                         )
                         .await
@@ -100,9 +100,9 @@ async fn route_request(
                 &pavex::http::Method::POST => {
                     route_3::middleware_0(
                             matched_route_template,
-                            url_params,
-                            request_body,
                             server_state.application_state.s1.clone(),
+                            request_body,
+                            url_params,
                             &request_head,
                         )
                         .await
@@ -113,8 +113,8 @@ async fn route_request(
                         ])
                         .into();
                     route_4::middleware_0(
-                            matched_route_template,
                             &allowed_methods,
+                            matched_route_template,
                             &request_head,
                         )
                         .await
@@ -135,8 +135,8 @@ async fn route_request(
                         ])
                         .into();
                     route_4::middleware_0(
-                            matched_route_template,
                             &allowed_methods,
+                            matched_route_template,
                             &request_head,
                         )
                         .await
@@ -151,8 +151,8 @@ async fn route_request(
                 &pavex::http::Method::POST => {
                     route_2::middleware_0(
                             matched_route_template,
-                            request_body,
                             server_state.application_state.s0.clone(),
+                            request_body,
                             &request_head,
                         )
                         .await
@@ -163,8 +163,8 @@ async fn route_request(
                         ])
                         .into();
                     route_4::middleware_0(
-                            matched_route_template,
                             &allowed_methods,
+                            matched_route_template,
                             &request_head,
                         )
                         .await
@@ -243,14 +243,14 @@ pub mod route_1 {
 pub mod route_2 {
     pub async fn middleware_0(
         v0: pavex::request::path::MatchedPathPattern,
-        v1: pavex::request::body::RawIncomingBody,
-        v2: tokio::sync::mpsc::Sender<wq_server::app::Task>,
+        v1: tokio::sync::mpsc::Sender<wq_server::app::Task>,
+        v2: pavex::request::body::RawIncomingBody,
         v3: &pavex::request::RequestHead,
     ) -> pavex::response::Response {
         let v4 = wq_server::telemetry::RootSpan::new(v3, v0);
         let v5 = crate::route_2::Next0 {
-            s_0: v2,
-            s_1: v1,
+            s_0: v1,
+            s_1: v2,
             s_2: v3,
             next: handler,
         };
@@ -321,16 +321,16 @@ pub mod route_2 {
 pub mod route_3 {
     pub async fn middleware_0(
         v0: pavex::request::path::MatchedPathPattern,
-        v1: pavex::request::path::RawPathParams<'_, '_>,
+        v1: apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
         v2: pavex::request::body::RawIncomingBody,
-        v3: apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
+        v3: pavex::request::path::RawPathParams<'_, '_>,
         v4: &pavex::request::RequestHead,
     ) -> pavex::response::Response {
         let v5 = wq_server::telemetry::RootSpan::new(v4, v0);
         let v6 = crate::route_3::Next0 {
-            s_0: v3,
+            s_0: v1,
             s_1: v2,
-            s_2: v1,
+            s_2: v3,
             s_3: v4,
             next: handler,
         };
@@ -417,13 +417,13 @@ pub mod route_3 {
 }
 pub mod route_4 {
     pub async fn middleware_0(
-        v0: pavex::request::path::MatchedPathPattern,
-        v1: &pavex::router::AllowedMethods,
+        v0: &pavex::router::AllowedMethods,
+        v1: pavex::request::path::MatchedPathPattern,
         v2: &pavex::request::RequestHead,
     ) -> pavex::response::Response {
-        let v3 = wq_server::telemetry::RootSpan::new(v2, v0);
+        let v3 = wq_server::telemetry::RootSpan::new(v2, v1);
         let v4 = crate::route_4::Next0 {
-            s_0: v1,
+            s_0: v0,
             next: handler,
         };
         let v5 = pavex::middleware::Next::new(v4);
