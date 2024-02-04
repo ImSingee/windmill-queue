@@ -1,11 +1,11 @@
 use serde_json::{Map as JsonMap, Value as JsonValue};
 
-pub type AnyMessage = JsonMap<String, JsonValue>;
+pub type Event = JsonMap<String, JsonValue>;
 
 #[derive(Debug)]
-pub struct Event {
+pub struct EventWithMeta {
     pub queue: String,
-    pub message: AnyMessage,
+    pub event: Event,
     pub meta: EventMeta,
 }
 
