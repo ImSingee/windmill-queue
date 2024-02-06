@@ -6,25 +6,32 @@ use crate::utils::pavex::json_response;
 use apalis::prelude::Storage;
 use pavex::request::body::JsonBody;
 use pavex::response::Response;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use thiserror::Error;
+use utoipa::ToSchema;
 
-#[derive(Deserialize, Debug)]
-pub struct In {
-    pub events: Vec<InEventWithMeta>,
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct IngestRequest {
+    pub events: Vec<IngestRequestEventWithMeta>,
     pub meta: EventsMeta,
 }
 
-#[derive(Deserialize, Debug)]
-pub struct InEventWithMeta {
-    pub event: Event,
-    #[serde(default = "Default::default")]
-    pub meta: InEventMeta,
+#[derive(Serialize, ToSchema, Debug)]
+pub struct IngestResponseSuccess {
+    /// Whether the request was successful (always true)
+    pub success: bool,
 }
 
-#[derive(Deserialize, Default, Debug)]
-pub struct InEventMeta {
+#[derive(Deserialize, ToSchema, Debug)]
+pub struct IngestRequestEventWithMeta {
+    pub event: Event,
+    #[serde(default = "Default::default")]
+    pub meta: IngestRequestEventMeta,
+}
+
+#[derive(Deserialize, ToSchema, Default, Debug)]
+pub struct IngestRequestEventMeta {
     pub id: Option<String>,
     #[serde(rename = "idKey")]
     pub id_key: Option<String>,
@@ -38,10 +45,10 @@ pub enum EventConvertError {
     IdKeyNotExist(String),
 }
 
-impl TryFrom<InEventWithMeta> for EventWithMeta {
+impl TryFrom<IngestRequestEventWithMeta> for EventWithMeta {
     type Error = EventConvertError;
 
-    fn try_from(value: InEventWithMeta) -> Result<Self, Self::Error> {
+    fn try_from(value: IngestRequestEventWithMeta) -> Result<Self, Self::Error> {
         let id = if let Some(id) = value.meta.id {
             id
         } else if let Some(id_key) = value.meta.id_key {
@@ -69,8 +76,17 @@ impl TryFrom<InEventWithMeta> for EventWithMeta {
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/ingest",
+    request_body = IngestRequest,
+    responses(
+        (status = 200, description = "success", body = IngestResponseSuccess),
+        (status = 400, description = "E40001 Ingested Event is invalid")
+    ),
+)]
 pub async fn ingest_events(
-    JsonBody(In { meta, events }): JsonBody<In>,
+    JsonBody(IngestRequest { meta, events }): JsonBody<IngestRequest>,
     mut producer: NewEventsProducer,
 ) -> HTTPResult<Response> {
     let events = events

@@ -1,7 +1,8 @@
 pub use crate::app::event::Event;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, ToSchema, Deserialize, Serialize)]
 pub struct EventsMeta {
     pub queue: String,
 }

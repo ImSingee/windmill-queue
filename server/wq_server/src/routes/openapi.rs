@@ -1,3 +1,4 @@
+use crate::app;
 use crate::routes;
 use crate::utils::error::{HTTPError, HTTPResult};
 use crate::utils::error_code::ErrorCode;
@@ -6,17 +7,41 @@ use pavex::request::path::PathParams;
 use pavex::response::body::raw::{Bytes, Full};
 use pavex::response::Response;
 use std::sync::Arc;
+use utoipa::openapi::schema::AdditionalProperties;
+use utoipa::openapi::{Object, RefOr, Schema};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
     info(title = "Windmill Events Queue", license(name = "MIT")),
-    paths(routes::status::ping,)
+    paths(routes::status::ping, routes::events::ingest_events),
+    components(schemas(
+        routes::events::IngestRequest,
+        routes::events::IngestResponseSuccess,
+        routes::events::IngestRequestEventWithMeta,
+        routes::events::IngestRequestEventMeta,
+        app::queue_events::EventsMeta,
+    ))
 )]
 struct ApiDoc;
 
 pub fn openapi_handler() -> Response {
-    let doc = ApiDoc::openapi();
+    let mut doc = ApiDoc::openapi();
+
+    let components = doc.components.as_mut().unwrap();
+
+    // let mut components = doc.components.unwrap();
+
+    // Object::default().additional_properties
+
+    components.schemas.insert(
+        "Event".to_string(),
+        RefOr::T(Schema::Object({
+            let mut obj = Object::default();
+            obj.additional_properties = Some(Box::new(AdditionalProperties::FreeForm(true)));
+            obj
+        })),
+    );
 
     json_response(doc)
 }
