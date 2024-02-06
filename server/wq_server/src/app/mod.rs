@@ -1,14 +1,13 @@
-mod task;
-pub mod event_locker;
+pub mod db;
 pub mod event;
+pub mod event_locker;
 pub mod queue;
 pub mod queue_events;
-pub mod db;
+mod task;
 
-use tokio::sync::mpsc;
 use anyhow::Result;
 pub use task::Task;
-use crate::app::db::Connection;
+use tokio::sync::mpsc;
 
 pub struct App {
     task_tx: mpsc::Sender<Task>,
@@ -46,7 +45,7 @@ impl App {
 }
 
 impl App {
-    pub fn pavex_task_sender(db: Connection) -> TaskSender {
+    pub fn pavex_task_sender() -> TaskSender {
         let app = Self::new();
 
         let task_sender = app.task_sender();

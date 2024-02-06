@@ -1204,6 +1204,7 @@ dependencies = [
 name = "entity"
 version = "0.0.0"
 dependencies = [
+ "chrono",
  "sea-orm",
 ]
 

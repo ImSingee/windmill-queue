@@ -5,6 +5,7 @@ use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, Sta
 use std::ops::Deref;
 use std::sync::Arc;
 
+#[derive(Clone)]
 pub struct Connection(DatabaseConnection);
 
 impl Deref for Connection {

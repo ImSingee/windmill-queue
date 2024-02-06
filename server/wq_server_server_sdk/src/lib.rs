@@ -13,16 +13,16 @@ pub struct ApplicationState {
 pub async fn build_application_state(
     v0: wq_server::configuration::Config,
 ) -> crate::ApplicationState {
-    let v1 = wq_server::configuration::Config::new_pavex(v0);
-    let v2 = <alloc::sync::Arc<
+    let v1 = wq_server::app::App::pavex_task_sender();
+    let v2 = wq_server::configuration::Config::new_pavex(v0);
+    let v3 = <alloc::sync::Arc<
         wq_server::configuration::Config,
-    > as core::clone::Clone>::clone(&v1);
-    let v3 = wq_server::app::queue::new(v2).await;
-    let v4 = wq_server::app::db::Connection::new_pavex(v1).await;
-    let v5 = wq_server::app::App::pavex_task_sender(v4);
+    > as core::clone::Clone>::clone(&v2);
+    let v4 = wq_server::app::db::Connection::new_pavex(v2).await;
+    let v5 = wq_server::app::queue::new(v3, v4).await;
     crate::ApplicationState {
-        s0: v5,
-        s1: v3,
+        s0: v1,
+        s1: v5,
     }
 }
 pub fn run(
