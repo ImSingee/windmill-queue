@@ -18,5 +18,4 @@ hyper = { version = "1.1.0", package = "hyper" }
 pavex = { version = "0.1.16", package = "pavex" }
 pavex_matchit = { version = "0.7.4", package = "pavex_matchit" }
 thiserror = { version = "1.0.56", package = "thiserror" }
-tokio = { version = "1.36.0", package = "tokio" }
 wq_server = { version = "0.1.0", path = "../wq_server", package = "wq_server" }

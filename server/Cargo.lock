@@ -4781,7 +4781,6 @@ dependencies = [
  "pavex",
  "pavex_matchit",
  "thiserror",
- "tokio",
  "wq_server",
 ]
 

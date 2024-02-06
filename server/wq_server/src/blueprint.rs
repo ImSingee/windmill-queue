@@ -48,7 +48,6 @@ pub fn blueprint() -> Blueprint {
     )
     .error_handler(f!(crate::utils::error::error_handler));
     bp.route(GET, "/api/ping", f!(crate::routes::status::ping));
-    bp.route(POST, "/demo", f!(crate::routes::demo::new_demo_task));
     bp.route(
         POST,
         "/api/ingest",
