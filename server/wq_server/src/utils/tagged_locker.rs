@@ -4,19 +4,20 @@ use tokio::sync::{Mutex, OwnedMutexGuard};
 
 #[derive(Clone)]
 pub struct TaggedLocker<K: std::hash::Hash + std::cmp::Eq> {
-    locks: DashMap<K, Arc<Mutex<()>>>,
+    locks: Arc<DashMap<K, Arc<Mutex<()>>>>,
 }
 
 impl<K> TaggedLocker<K>
-    where
-        K: Eq + std::hash::Hash + std::cmp::Eq,
+where
+    K: Eq + std::hash::Hash + std::cmp::Eq,
 {
     pub fn new() -> Self {
         Self {
-            locks: DashMap::new(),
+            locks: Arc::new(DashMap::new()),
         }
     }
 
+    #[must_use]
     pub async fn lock_for(&self, tag: K) -> OwnedMutexGuard<()> {
         let lock = self
             .locks
