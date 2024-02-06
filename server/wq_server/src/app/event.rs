@@ -14,5 +14,6 @@ pub struct EventWithMeta {
 pub struct EventMeta {
     pub id: String,
     pub ts: u64,
+    pub trace_id: String,
 }
 

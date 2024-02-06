@@ -20,5 +20,5 @@ anyhow = "1.0.79"
 dashmap = "5.5.3"
 chrono = "0.4.33"
 thiserror = "1.0.56"
-uuid = { version = "1.7.0", features = ["v7"] }
 apalis = { version = "0.4.9", features = ["postgres"] }
+ulid = "1.1.2"

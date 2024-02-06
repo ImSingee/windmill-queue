@@ -5,7 +5,6 @@ use pavex::response::Response;
 use serde::Deserialize;
 use serde_json::json;
 use thiserror::Error;
-use uuid::Uuid;
 use crate::app::event::{Event, EventWithMeta, EventMeta};
 use crate::app::queue::{NewEvents, NewEventsProducer};
 use crate::utils::pavex::{json_response, json_response_with_status};
@@ -35,6 +34,7 @@ pub struct InEventMeta {
     #[serde(rename = "idKey")]
     pub id_key: Option<String>,
     pub ts: Option<u64>,
+    pub trace_id: Option<String>,
 }
 
 #[derive(Debug, Error)]
@@ -45,8 +45,6 @@ enum EventConvertError {
 
 impl InEventWithMeta {
     fn into_event(self, queue: &str) -> Result<EventWithMeta, EventConvertError> {
-        let ts = self.meta.ts.unwrap_or_else(|| chrono::Utc::now().timestamp_millis() as u64);
-
         let id = if let Some(id) = self.meta.id {
             id
         } else if let Some(id_key) = self.meta.id_key {
@@ -56,8 +54,11 @@ impl InEventWithMeta {
                 return Err(EventConvertError::IdKeyNotExist(id_key));
             }
         } else {
-            Uuid::now_v7().to_string()
+            ulid::Ulid::new().to_string()
         };
+
+        let trace_id = self.meta.trace_id.unwrap_or_else(|| id.to_string());
+        let ts = self.meta.ts.unwrap_or_else(|| chrono::Utc::now().timestamp_millis() as u64);
 
         Ok(EventWithMeta {
             queue: queue.to_string(),
@@ -65,10 +66,12 @@ impl InEventWithMeta {
             meta: EventMeta {
                 id,
                 ts,
+                trace_id,
             },
         })
     }
 }
+
 
 pub async fn ingest_events(JsonBody(In { meta, events }): JsonBody<In>, mut producer: NewEventsProducer) -> Response {
     let events = events.into_iter().map(|event| event.into_event(&meta.queue)).collect::<Result<Vec<_>, _>>();
