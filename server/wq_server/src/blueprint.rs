@@ -17,7 +17,7 @@ pub fn blueprint() -> Blueprint {
     bp.route(GET, "/", f!(crate::routes::root));
     bp.route(GET, "/api/ping", f!(crate::routes::status::ping));
     bp.route(POST, "/demo", f!(crate::routes::demo::new_demo_task));
-    bp.route(POST, "/api/events/:queue", f!(crate::routes::events::ingest_events));
+    bp.route(POST, "/api/ingest", f!(crate::routes::events::ingest_events));
     bp
 }
 

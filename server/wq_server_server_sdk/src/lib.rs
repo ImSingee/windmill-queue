@@ -33,7 +33,7 @@ pub fn run(
 fn build_router() -> pavex_matchit::Router<u32> {
     let mut router = pavex_matchit::Router::new();
     router.insert("/", 0u32).unwrap();
-    router.insert("/api/events/:queue", 1u32).unwrap();
+    router.insert("/api/ingest", 1u32).unwrap();
     router.insert("/api/ping", 2u32).unwrap();
     router.insert("/demo", 3u32).unwrap();
     router
@@ -94,7 +94,7 @@ async fn route_request(
         }
         1u32 => {
             let matched_route_template = pavex::request::path::MatchedPathPattern::new(
-                "/api/events/:queue",
+                "/api/ingest",
             );
             match &request_head.method {
                 &pavex::http::Method::POST => {
@@ -102,7 +102,6 @@ async fn route_request(
                             matched_route_template,
                             server_state.application_state.s1.clone(),
                             request_body,
-                            url_params,
                             &request_head,
                         )
                         .await
@@ -323,95 +322,76 @@ pub mod route_3 {
         v0: pavex::request::path::MatchedPathPattern,
         v1: apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
         v2: pavex::request::body::RawIncomingBody,
-        v3: pavex::request::path::RawPathParams<'_, '_>,
-        v4: &pavex::request::RequestHead,
+        v3: &pavex::request::RequestHead,
     ) -> pavex::response::Response {
-        let v5 = wq_server::telemetry::RootSpan::new(v4, v0);
-        let v6 = crate::route_3::Next0 {
+        let v4 = wq_server::telemetry::RootSpan::new(v3, v0);
+        let v5 = crate::route_3::Next0 {
             s_0: v1,
             s_1: v2,
             s_2: v3,
-            s_3: v4,
             next: handler,
         };
-        let v7 = pavex::middleware::Next::new(v6);
-        wq_server::telemetry::logger(v7, v5).await
+        let v6 = pavex::middleware::Next::new(v5);
+        wq_server::telemetry::logger(v6, v4).await
     }
     pub async fn handler(
         v0: apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
         v1: pavex::request::body::RawIncomingBody,
-        v2: pavex::request::path::RawPathParams<'_, '_>,
-        v3: &pavex::request::RequestHead,
+        v2: &pavex::request::RequestHead,
     ) -> pavex::response::Response {
-        let v4 = <pavex::request::body::BodySizeLimit as std::default::Default>::default();
-        let v5 = pavex::request::body::BufferedBody::extract(v3, v1, v4).await;
-        let v6 = match v5 {
+        let v3 = <pavex::request::body::BodySizeLimit as std::default::Default>::default();
+        let v4 = pavex::request::body::BufferedBody::extract(v2, v1, v3).await;
+        let v5 = match v4 {
             Ok(ok) => ok,
-            Err(v6) => {
+            Err(v5) => {
                 return {
-                    let v7 = pavex::request::body::errors::ExtractBufferedBodyError::into_response(
-                        &v6,
+                    let v6 = pavex::request::body::errors::ExtractBufferedBodyError::into_response(
+                        &v5,
                     );
                     <pavex::response::Response as pavex::response::IntoResponse>::into_response(
-                        v7,
+                        v6,
                     )
                 };
             }
         };
-        let v7 = pavex::request::body::JsonBody::extract(v3, &v6);
-        let v8 = match v7 {
+        let v6 = pavex::request::body::JsonBody::extract(v2, &v5);
+        let v7 = match v6 {
             Ok(ok) => ok,
-            Err(v8) => {
+            Err(v7) => {
                 return {
-                    let v9 = pavex::request::body::errors::ExtractJsonBodyError::into_response(
-                        &v8,
+                    let v8 = pavex::request::body::errors::ExtractJsonBodyError::into_response(
+                        &v7,
                     );
                     <pavex::response::Response as pavex::response::IntoResponse>::into_response(
-                        v9,
+                        v8,
                     )
                 };
             }
         };
-        let v9 = pavex::request::path::PathParams::extract(v2);
-        let v10 = match v9 {
-            Ok(ok) => ok,
-            Err(v10) => {
-                return {
-                    let v11 = pavex::request::path::errors::ExtractPathParamsError::into_response(
-                        &v10,
-                    );
-                    <pavex::response::Response as pavex::response::IntoResponse>::into_response(
-                        v11,
-                    )
-                };
-            }
-        };
-        let v11 = wq_server::routes::events::ingest_events(&v10, v8, v0).await;
-        <pavex::response::Response as pavex::response::IntoResponse>::into_response(v11)
+        let v8 = wq_server::routes::events::ingest_events(v7, v0).await;
+        <pavex::response::Response as pavex::response::IntoResponse>::into_response(v8)
     }
-    pub struct Next0<'a, 'b, 'c, T>
+    pub struct Next0<'a, T>
     where
         T: std::future::Future<Output = pavex::response::Response>,
     {
         s_0: apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
         s_1: pavex::request::body::RawIncomingBody,
-        s_2: pavex::request::path::RawPathParams<'a, 'b>,
-        s_3: &'c pavex::request::RequestHead,
+        s_2: &'a pavex::request::RequestHead,
         next: fn(
             apalis_sql::postgres::PostgresStorage<wq_server::app::queue::NewEvents>,
             pavex::request::body::RawIncomingBody,
-            pavex::request::path::RawPathParams<'a, 'b>,
-            &'c pavex::request::RequestHead,
+            &'a pavex::request::RequestHead,
         ) -> T,
     }
-    impl<'a, 'b, 'c, T> std::future::IntoFuture for Next0<'a, 'b, 'c, T>
+    impl<'a, T> std::future::IntoFuture for Next0<'a, T>
     where
         T: std::future::Future<Output = pavex::response::Response>,
     {
         type Output = pavex::response::Response;
         type IntoFuture = T;
         fn into_future(self) -> Self::IntoFuture {
-            (self.next)(self.s_0, self.s_1, self.s_2, self.s_3)
+            (self.next)(self.s_0, self.s_1, self.s_2)
         }
     }
 }

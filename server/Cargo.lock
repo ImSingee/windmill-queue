@@ -3636,6 +3636,7 @@ dependencies = [
  "pavex",
  "reqwest",
  "serde",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-bunyan-formatter",

@@ -2,6 +2,7 @@ use wq_server_server::configuration::{load_configuration, ApplicationProfile};
 use wq_server_server_sdk::{build_application_state, run};
 use wq_server::configuration::Config;
 use pavex::server::Server;
+use serde::Serialize;
 
 pub struct TestApi {
     pub api_address: String,
@@ -45,6 +46,19 @@ impl TestApi {
     {
         self.api_client
             .get(&format!("{}/api/ping", &self.api_address))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+    }
+
+    pub async fn ingest_events<T: Serialize>(&self, body: T) -> reqwest::Response
+    {
+        let body = serde_json::to_string(&body).unwrap();
+
+        self.api_client
+            .post(&format!("{}/api/ingest", &self.api_address))
+            .header("Content-Type", "application/json; charset=utf-8")
+            .body(body)
             .send()
             .await
             .expect("Failed to execute request.")

@@ -1,7 +1,6 @@
 use apalis::prelude::Storage;
 use pavex::http::StatusCode;
 use pavex::request::body::JsonBody;
-use pavex::request::path::PathParams;
 use pavex::response::Response;
 use serde::Deserialize;
 use serde_json::json;
@@ -11,8 +10,15 @@ use crate::app::event::{Event, EventWithMeta, EventMeta};
 use crate::app::queue::{NewEvents, NewEventsProducer};
 use crate::utils::pavex::{json_response, json_response_with_status};
 
-#[PathParams]
-pub struct Params {
+
+#[derive(Deserialize, Debug)]
+pub struct In {
+    pub events: Vec<InEventWithMeta>,
+    pub meta: Meta,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Meta {
     pub queue: String,
 }
 
@@ -64,8 +70,8 @@ impl InEventWithMeta {
     }
 }
 
-pub async fn ingest_events(PathParams(Params { queue }): &PathParams<Params>, JsonBody(events): JsonBody<Vec<InEventWithMeta>>, mut producer: NewEventsProducer) -> Response {
-    let events = events.into_iter().map(|event| event.into_event(&queue)).collect::<Result<Vec<_>, _>>();
+pub async fn ingest_events(JsonBody(In { meta, events }): JsonBody<In>, mut producer: NewEventsProducer) -> Response {
+    let events = events.into_iter().map(|event| event.into_event(&meta.queue)).collect::<Result<Vec<_>, _>>();
     let events = match events {
         Ok(events) => events,
         Err(err) => {
