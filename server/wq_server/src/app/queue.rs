@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use crate::app::event_locker::EventLocker;
 use crate::app::queue_events::{EventWithMeta, EventsMeta};
 use crate::configuration::Config;
@@ -41,8 +42,8 @@ async fn on_new_events(NewEvents { events, meta }: NewEvents, ctx: JobContext) {
     drop(guard);
 }
 
-pub async fn new(config: Config) -> NewEventsProducer {
-    let database_url = config.database.url;
+pub async fn new(config: Arc<Config>) -> NewEventsProducer {
+    let database_url = &config.database.url;
     let pg: PostgresStorage<NewEvents> = PostgresStorage::connect(database_url).await.unwrap();
     pg.setup()
         .await

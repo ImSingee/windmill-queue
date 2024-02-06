@@ -16,7 +16,12 @@ pub fn blueprint() -> Blueprint {
 
     add_telemetry_middleware(&mut bp);
 
-    bp.constructor(f!(crate::app::App::pavex_task_sender), Lifecycle::Singleton);
+    bp.constructor(f!(crate::configuration::Config::new_pavex), Lifecycle::Singleton).cloning(CloningStrategy::CloneIfNecessary);
+    bp.constructor(
+        f!(crate::app::db::Connection::new_pavex),
+        Lifecycle::Singleton,
+    ).cloning(CloningStrategy::CloneIfNecessary);
+    bp.constructor(f!(crate::app::App::pavex_task_sender), Lifecycle::Singleton).cloning(CloningStrategy::CloneIfNecessary);
     bp.constructor(f!(crate::app::queue::new), Lifecycle::Singleton);
 
     bp.route(GET, "/", f!(crate::routes::root));

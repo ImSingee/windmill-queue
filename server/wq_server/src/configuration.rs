@@ -1,6 +1,7 @@
 use pavex::server::IncomingStream;
 use serde_aux::field_attributes::deserialize_number_from_string;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use serde::Deserialize;
 
 #[derive(Clone, Deserialize)]
@@ -9,6 +10,12 @@ use serde::Deserialize;
 pub struct Config {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
+}
+
+impl Config {
+    pub fn new_pavex(self) -> Arc<Self> {
+        Arc::new(self)
+    }
 }
 
 #[derive(Clone, Deserialize)]
