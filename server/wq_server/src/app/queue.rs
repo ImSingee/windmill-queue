@@ -3,11 +3,12 @@ use crate::app::event_locker::EventLocker;
 use crate::app::queue_events::{EventWithMeta, EventsMeta};
 use crate::configuration::Config;
 use anyhow::Result;
-use apalis::layers::Extension;
+use apalis::layers::{Extension, TraceLayer};
 use apalis::postgres::PostgresStorage;
 use apalis::prelude::{Job, JobContext, Monitor, WithStorage, WorkerBuilder, WorkerFactoryFn};
 use chrono::NaiveDateTime;
 use entity::events;
+use sea_orm::sea_query::OnConflict;
 use sea_orm::{ActiveValue, EntityTrait};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -64,7 +65,11 @@ async fn on_new_events(NewEvents { events, meta }: NewEvents, ctx: JobContext) -
     // TODO filter out duplicate events
 
     events::Entity::insert_many(events)
-        .on_empty_do_nothing()
+        .on_conflict(
+            OnConflict::columns([events::Column::Queue, events::Column::Id])
+                .do_nothing()
+                .to_owned(),
+        )
         .exec(db.inner())
         .await?;
 
@@ -90,6 +95,7 @@ pub async fn new(config: Arc<Config>, db: Connection) -> NewEventsProducer {
                 // TODO recover from panic
 
                 WorkerBuilder::new(format!("wq-new-events-worker-{index}"))
+                    .layer(TraceLayer::new())
                     .layer(Extension(locker.clone()))
                     .layer(Extension(db.clone()))
                     .with_storage(storage.clone())
