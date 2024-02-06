@@ -1,5 +1,5 @@
 use crate::routes;
-use crate::utils::error::{HTTPError, HTTPResult, PhantomError};
+use crate::utils::error::{HTTPError, HTTPResult};
 use crate::utils::error_code::ErrorCode;
 use crate::utils::pavex::json_response;
 use pavex::request::path::PathParams;
@@ -42,8 +42,6 @@ pub fn swagger_ui_handler_catch_all(
 }
 
 fn swagger_ui_handler(path: String) -> HTTPResult<Response> {
-    println!("path: {path}");
-
     let config = utoipa_swagger_ui::Config::from("/openapi.json");
     match utoipa_swagger_ui::serve(&path, Arc::new(config)) {
         Ok(swagger_file) => swagger_file
@@ -60,10 +58,14 @@ fn swagger_ui_handler(path: String) -> HTTPResult<Response> {
                 Ok(response)
             })
             .unwrap_or_else(|| Ok(Response::not_found())),
-        Err(err) => Err(HTTPError::internal_server_error(
-            ErrorCode::E50002,
-            "Failed to serve Swagger UI",
-            None::<PhantomError>, // TODO Some(Box::new(err))
-        )),
+        Err(err) => {
+            let err = anyhow::anyhow!("swagger error: {}", err);
+
+            Err(HTTPError::internal_server_error(
+                ErrorCode::E50002,
+                "Failed to serve Swagger UI",
+                err,
+            ))
+        }
     }
 }

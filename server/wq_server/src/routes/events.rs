@@ -79,13 +79,13 @@ pub async fn ingest_events(JsonBody(In { meta, events }): JsonBody<In>, mut prod
     let events = match events {
         Ok(events) => events,
         Err(err) => {
-            return Err(HTTPError::bad_request(ErrorCode::E40001, "invalid event", Some(err)));
+            return Err(HTTPError::bad_request(ErrorCode::E40001, "invalid event", err));
         }
     };
 
     let result = producer.push(NewEvents { events_with_meta: events }).await;
     if let Err(err) = result {
-        return Err(HTTPError::internal_server_error(ErrorCode::E50001, "failed to persist events", Some(err)));
+        return Err(HTTPError::internal_server_error(ErrorCode::E50001, "failed to persist events", err));
     }
 
     Ok(json_response(json!({"success": true})))

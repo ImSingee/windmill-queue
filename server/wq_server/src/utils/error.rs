@@ -8,15 +8,13 @@ use thiserror::Error;
 
 pub type HTTPResult<T> = std::result::Result<T, HTTPError>;
 
-type BoxedError = Box<dyn std::error::Error + 'static + Send + Sync>;
-
 #[derive(Debug, Error)]
 pub struct HTTPError {
     status: StatusCode,
     code: ErrorCode,
     message: String,
     #[source]
-    source: Option<BoxedError>,
+    error: anyhow::Error,
 }
 
 impl Display for HTTPError {
@@ -29,49 +27,35 @@ impl Display for HTTPError {
     }
 }
 
-#[derive(Debug)]
-pub enum PhantomError {}
-
-impl Display for PhantomError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "phantom error")
-    }
-}
-
-impl std::error::Error for PhantomError {}
-
-unsafe impl Send for PhantomError {}
-unsafe impl Sync for PhantomError {}
-
 impl HTTPError {
-    pub fn new<E: std::error::Error + 'static + Send + Sync>(
+    pub fn new(
         status: StatusCode,
         code: ErrorCode,
         message: impl Into<String>,
-        source: Option<E>,
+        error: impl Into<anyhow::Error>,
     ) -> Self {
         Self {
             status,
             code,
             message: message.into(),
-            source: source.map(|e| Box::new(e) as BoxedError),
+            error: error.into(),
         }
     }
 
-    pub fn bad_request<E: std::error::Error + 'static + Send + Sync>(
+    pub fn bad_request(
         code: ErrorCode,
         message: impl Into<String>,
-        source: Option<E>,
+        error: impl Into<anyhow::Error>,
     ) -> Self {
-        Self::new(StatusCode::BAD_REQUEST, code, message, source)
+        Self::new(StatusCode::BAD_REQUEST, code, message, error)
     }
 
-    pub fn internal_server_error<E: std::error::Error + 'static + Send + Sync>(
+    pub fn internal_server_error(
         code: ErrorCode,
         message: impl Into<String>,
-        source: Option<E>,
+        error: impl Into<anyhow::Error>,
     ) -> Self {
-        Self::new(StatusCode::INTERNAL_SERVER_ERROR, code, message, source)
+        Self::new(StatusCode::INTERNAL_SERVER_ERROR, code, message, error)
     }
 }
 
@@ -81,13 +65,14 @@ impl IntoResponse for &HTTPError {
             status,
             code,
             message,
-            source,
+            error,
         } = self;
 
         let body = json!({
             "success": false,
             "code": code.to_string(),
             "message": message,
+            "error": format!("{}", error),
         });
 
         json_response_with_status(status.clone(), body)
