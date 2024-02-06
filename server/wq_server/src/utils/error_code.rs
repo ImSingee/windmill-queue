@@ -31,4 +31,5 @@ macro_rules! define_codes {
 define_codes!(
     E40001,
     E50001,
+    E50002,
 );

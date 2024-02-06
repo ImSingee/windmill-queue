@@ -1,5 +1,4 @@
 use apalis::prelude::Storage;
-use pavex::http::StatusCode;
 use pavex::request::body::JsonBody;
 use pavex::response::Response;
 use serde::Deserialize;
@@ -86,7 +85,7 @@ pub async fn ingest_events(JsonBody(In { meta, events }): JsonBody<In>, mut prod
 
     let result = producer.push(NewEvents { events_with_meta: events }).await;
     if let Err(err) = result {
-        return Err(HTTPError::bad_request(ErrorCode::E50001, "failed to persist events", Some(err)));
+        return Err(HTTPError::internal_server_error(ErrorCode::E50001, "failed to persist events", Some(err)));
     }
 
     Ok(json_response(json!({"success": true})))

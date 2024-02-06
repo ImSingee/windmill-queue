@@ -1,5 +1,10 @@
 use pavex::blueprint::constructor::CloningStrategy;
-use pavex::blueprint::{constructor::Lifecycle, router::{GET, POST}, Blueprint};
+use pavex::blueprint::router::ANY;
+use pavex::blueprint::{
+    constructor::Lifecycle,
+    router::{GET, POST},
+    Blueprint,
+};
 use pavex::f;
 use pavex::kit::ApiKit;
 
@@ -15,9 +20,36 @@ pub fn blueprint() -> Blueprint {
     bp.constructor(f!(crate::app::queue::new), Lifecycle::Singleton);
 
     bp.route(GET, "/", f!(crate::routes::root));
+    bp.route(
+        GET,
+        "/openapi.json",
+        f!(crate::routes::openapi::openapi_handler),
+    );
+    bp.route(
+        ANY,
+        "/swagger",
+        f!(crate::routes::openapi::swagger_ui_handler_root_redirect),
+    );
+    bp.route(
+        ANY,
+        "/swagger/",
+        f!(crate::routes::openapi::swagger_ui_handler_root),
+    )
+    .error_handler(f!(crate::utils::error::error_handler));
+    bp.route(
+        ANY,
+        "/swagger/*path",
+        f!(crate::routes::openapi::swagger_ui_handler_catch_all),
+    )
+    .error_handler(f!(crate::utils::error::error_handler));
     bp.route(GET, "/api/ping", f!(crate::routes::status::ping));
     bp.route(POST, "/demo", f!(crate::routes::demo::new_demo_task));
-    bp.route(POST, "/api/ingest", f!(crate::routes::events::ingest_events)).error_handler(f!(crate::utils::error::error_handler));
+    bp.route(
+        POST,
+        "/api/ingest",
+        f!(crate::routes::events::ingest_events),
+    )
+    .error_handler(f!(crate::utils::error::error_handler));
     bp
 }
 
@@ -27,7 +59,7 @@ fn add_telemetry_middleware(bp: &mut Blueprint) {
         f!(crate::telemetry::RootSpan::new),
         Lifecycle::RequestScoped,
     )
-        .cloning(CloningStrategy::CloneIfNecessary);
+    .cloning(CloningStrategy::CloneIfNecessary);
 
     bp.wrap(f!(crate::telemetry::logger));
     bp.error_observer(f!(crate::telemetry::log_error));
