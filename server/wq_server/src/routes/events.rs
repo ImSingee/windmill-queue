@@ -1,25 +1,19 @@
+use crate::app::queue::{NewEvents, NewEventsProducer};
+use crate::app::queue_events::{Event, EventMeta, EventWithMeta, EventsMeta};
+use crate::utils::error::{HTTPError, HTTPResult};
+use crate::utils::error_code::ErrorCode;
+use crate::utils::pavex::json_response;
 use apalis::prelude::Storage;
 use pavex::request::body::JsonBody;
 use pavex::response::Response;
 use serde::Deserialize;
 use serde_json::json;
 use thiserror::Error;
-use crate::app::event::{Event, EventWithMeta, EventMeta};
-use crate::app::queue::{NewEvents, NewEventsProducer};
-use crate::utils::pavex::json_response;
-use crate::utils::error::{HTTPResult, HTTPError};
-use crate::utils::error_code::ErrorCode;
-
 
 #[derive(Deserialize, Debug)]
 pub struct In {
     pub events: Vec<InEventWithMeta>,
-    pub meta: Meta,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Meta {
-    pub queue: String,
+    pub meta: EventsMeta,
 }
 
 #[derive(Deserialize, Debug)]
@@ -39,18 +33,22 @@ pub struct InEventMeta {
 }
 
 #[derive(Debug, Error)]
-enum EventConvertError {
+pub enum EventConvertError {
     #[error("idKey {0} does not exist in provided event")]
-    IdKeyNotExist(String)
+    IdKeyNotExist(String),
 }
 
-impl InEventWithMeta {
-    fn into_event(self, queue: &str) -> Result<EventWithMeta, EventConvertError> {
-        let id = if let Some(id) = self.meta.id {
+impl TryFrom<InEventWithMeta> for EventWithMeta {
+    type Error = EventConvertError;
+
+    fn try_from(value: InEventWithMeta) -> Result<Self, Self::Error> {
+        let id = if let Some(id) = value.meta.id {
             id
-        } else if let Some(id_key) = self.meta.id_key {
-            if let Some(id) = self.event.get(&id_key) {
-                id.as_str().ok_or_else(|| EventConvertError::IdKeyNotExist(id_key.clone()))?.to_string()
+        } else if let Some(id_key) = value.meta.id_key {
+            if let Some(id) = value.event.get(&id_key) {
+                id.as_str()
+                    .ok_or_else(|| EventConvertError::IdKeyNotExist(id_key.clone()))?
+                    .to_string()
             } else {
                 return Err(EventConvertError::IdKeyNotExist(id_key));
             }
@@ -58,34 +56,45 @@ impl InEventWithMeta {
             ulid::Ulid::new().to_string()
         };
 
-        let trace_id = self.meta.trace_id.unwrap_or_else(|| id.to_string());
-        let ts = self.meta.ts.unwrap_or_else(|| chrono::Utc::now().timestamp_millis() as u64);
+        let trace_id = value.meta.trace_id.unwrap_or_else(|| id.to_string());
+        let ts = value
+            .meta
+            .ts
+            .unwrap_or_else(|| chrono::Utc::now().timestamp_millis() as u64);
 
         Ok(EventWithMeta {
-            queue: queue.to_string(),
-            event: self.event,
-            meta: EventMeta {
-                id,
-                ts,
-                trace_id,
-            },
+            event: value.event,
+            meta: EventMeta { id, ts, trace_id },
         })
     }
 }
 
-
-pub async fn ingest_events(JsonBody(In { meta, events }): JsonBody<In>, mut producer: NewEventsProducer) -> HTTPResult<Response> {
-    let events = events.into_iter().map(|event| event.into_event(&meta.queue)).collect::<std::result::Result<Vec<_>, _>>();
+pub async fn ingest_events(
+    JsonBody(In { meta, events }): JsonBody<In>,
+    mut producer: NewEventsProducer,
+) -> HTTPResult<Response> {
+    let events = events
+        .into_iter()
+        .map(|event| event.try_into())
+        .collect::<std::result::Result<Vec<EventWithMeta>, _>>();
     let events = match events {
         Ok(events) => events,
         Err(err) => {
-            return Err(HTTPError::bad_request(ErrorCode::E40001, "invalid event", err));
+            return Err(HTTPError::bad_request(
+                ErrorCode::E40001,
+                "invalid event",
+                err,
+            ));
         }
     };
 
-    let result = producer.push(NewEvents { events_with_meta: events }).await;
+    let result = producer.push(NewEvents { events, meta }).await;
     if let Err(err) = result {
-        return Err(HTTPError::internal_server_error(ErrorCode::E50001, "failed to persist events", err));
+        return Err(HTTPError::internal_server_error(
+            ErrorCode::E50001,
+            "failed to persist events",
+            err,
+        ));
     }
 
     Ok(json_response(json!({"success": true})))

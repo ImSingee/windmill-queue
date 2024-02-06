@@ -1,7 +1,10 @@
+pub use crate::app::event::Event;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map as JsonMap, Value as JsonValue};
 
-pub type Event = JsonMap<String, JsonValue>;
+#[derive(Debug, Deserialize, Serialize)]
+pub struct EventsMeta {
+    pub queue: String,
+}
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct EventWithMeta {
@@ -14,5 +17,4 @@ pub struct EventMeta {
     pub id: String,
     pub ts: u64,
     pub trace_id: String,
-    pub queue: String,
 }

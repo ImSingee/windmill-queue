@@ -1,7 +1,8 @@
 mod task;
-mod locker;
+pub mod event_locker;
 pub mod event;
 pub mod queue;
+pub mod queue_events;
 
 use tokio::sync::mpsc;
 use anyhow::Result;

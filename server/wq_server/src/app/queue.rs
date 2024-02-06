@@ -1,12 +1,15 @@
+use crate::app::event_locker::EventLocker;
+use crate::app::queue_events::{EventWithMeta, EventsMeta};
+use crate::configuration::Config;
+use apalis::layers::Extension;
 use apalis::postgres::PostgresStorage;
 use apalis::prelude::{Job, JobContext, Monitor, WithStorage, WorkerBuilder, WorkerFactoryFn};
 use serde::{Deserialize, Serialize};
-use crate::app::event::EventWithMeta;
-use crate::configuration::Config;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct NewEvents {
-    pub(crate) events_with_meta: Vec<EventWithMeta>,
+    pub events: Vec<EventWithMeta>,
+    pub meta: EventsMeta,
 }
 
 impl Job for NewEvents {
@@ -15,13 +18,17 @@ impl Job for NewEvents {
 
 pub type NewEventsProducer = PostgresStorage<NewEvents>;
 
-async fn on_new_events(NewEvents { events_with_meta }: NewEvents, _ctx: JobContext) {
+async fn on_new_events(NewEvents { events, meta }: NewEvents, ctx: JobContext) {
+    let queue = meta.queue;
+    let locker = ctx.data::<EventLocker>().unwrap().clone();
+    locker.lock_for(queue.clone()).await;
+
     // TODO
 
-    println!("Received {} new events", events_with_meta.len());
+    tracing::info!("Received {} new events", events.len());
 
-    for event_with_meta in events_with_meta {
-        println!("Event: {:?}", event_with_meta);
+    for event_with_meta in events {
+        tracing::info!("Event: {:?}", event_with_meta);
     }
 }
 
@@ -39,6 +46,7 @@ pub async fn new(config: Config) -> NewEventsProducer {
         Monitor::new()
             .register_with_count(4, move |index| {
                 WorkerBuilder::new(format!("wq-new-events-worker-{index}"))
+                    .layer(Extension(EventLocker::new()))
                     .with_storage(storage.clone())
                     .build_fn(on_new_events)
             })
@@ -46,7 +54,6 @@ pub async fn new(config: Config) -> NewEventsProducer {
             .await
             .expect("queue monitor run failed");
     });
-
 
     producer
 }
