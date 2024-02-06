@@ -385,7 +385,20 @@ pub mod route_3 {
             }
         };
         let v9 = wq_server::routes::events::ingest_events(v8, v0).await;
-        <pavex::response::Response as pavex::response::IntoResponse>::into_response(v9)
+        let v10 = match v9 {
+            Ok(ok) => ok,
+            Err(v10) => {
+                return {
+                    let v11 = wq_server::utils::error::error_handler(&v10);
+                    let v12 = pavex::Error::new(v10);
+                    wq_server::telemetry::log_error(&v12, v2).await;
+                    <pavex::response::Response as pavex::response::IntoResponse>::into_response(
+                        v11,
+                    )
+                };
+            }
+        };
+        <pavex::response::Response as pavex::response::IntoResponse>::into_response(v10)
     }
     pub struct Next0<'a, T>
     where

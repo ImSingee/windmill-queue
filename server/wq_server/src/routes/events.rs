@@ -7,7 +7,9 @@ use serde_json::json;
 use thiserror::Error;
 use crate::app::event::{Event, EventWithMeta, EventMeta};
 use crate::app::queue::{NewEvents, NewEventsProducer};
-use crate::utils::pavex::{json_response, json_response_with_status};
+use crate::utils::pavex::json_response;
+use crate::utils::error::{HTTPResult, HTTPError};
+use crate::utils::error_code::ErrorCode;
 
 
 #[derive(Deserialize, Debug)]
@@ -73,19 +75,19 @@ impl InEventWithMeta {
 }
 
 
-pub async fn ingest_events(JsonBody(In { meta, events }): JsonBody<In>, mut producer: NewEventsProducer) -> Response {
-    let events = events.into_iter().map(|event| event.into_event(&meta.queue)).collect::<Result<Vec<_>, _>>();
+pub async fn ingest_events(JsonBody(In { meta, events }): JsonBody<In>, mut producer: NewEventsProducer) -> HTTPResult<Response> {
+    let events = events.into_iter().map(|event| event.into_event(&meta.queue)).collect::<std::result::Result<Vec<_>, _>>();
     let events = match events {
         Ok(events) => events,
         Err(err) => {
-            return json_response_with_status(StatusCode::BAD_REQUEST, json!({"success": false, "error": err.to_string()}));
+            return Err(HTTPError::bad_request(ErrorCode::E40001, "invalid event", Some(err)));
         }
     };
 
     let result = producer.push(NewEvents { events_with_meta: events }).await;
     if let Err(err) = result {
-        return json_response_with_status(StatusCode::INTERNAL_SERVER_ERROR, json!({"success": false, "error": err.to_string()}));
+        return Err(HTTPError::bad_request(ErrorCode::E50001, "failed to persist events", Some(err)));
     }
 
-    json_response(json!({"success": true}))
+    Ok(json_response(json!({"success": true})))
 }

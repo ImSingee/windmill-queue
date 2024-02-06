@@ -2,7 +2,7 @@ use wq_server_server::configuration::{load_configuration, ApplicationProfile};
 use wq_server_server_sdk::{build_application_state, run};
 use wq_server::configuration::Config;
 use pavex::server::Server;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 pub struct TestApi {
     pub api_address: String,
@@ -64,3 +64,27 @@ impl TestApi {
             .expect("Failed to execute request.")
     }
 }
+
+#[derive(Deserialize)]
+pub struct ErrorResponse {
+    pub success: bool,
+    pub code: String,
+    pub message: String,
+}
+
+
+pub trait ResponseExt {
+    async fn to_error_response(self) -> ErrorResponse;
+}
+
+impl ResponseExt for reqwest::Response {
+    async fn to_error_response(self) -> ErrorResponse {
+        let response = self.json::<ErrorResponse>().await.unwrap();
+
+        assert_eq!(response.success, false);
+
+        response
+    }
+}
+
+
