@@ -1,6 +1,6 @@
-use pavex::request::path::MatchedPathPattern;
 use pavex::http::Version;
 use pavex::middleware::Next;
+use pavex::request::path::MatchedPathPattern;
 use pavex::request::RequestHead;
 use pavex::response::Response;
 use std::borrow::Cow;
@@ -21,16 +21,55 @@ pub async fn logger<T>(next: Next<T>, root_span: RootSpan) -> Response
     response
 }
 
-/// A root span is the top-level *logical* span for an incoming request.  
+/// An error observer to log error details.
+///
+/// It emits an error event and attaches information about the error to the root span.
+/// If multiple errors are observed for the same request, it will emit multiple error events
+/// but only the details of the last error will be attached to the root span.
+pub async fn log_error(e: &pavex::Error, root_span: RootSpan) {
+    let source_chain = error_source_chain(e);
+    tracing::error!(
+        error.msg = %e,
+        error.details = ?e,
+        error.source_chain = %source_chain,
+        "An error occurred during request handling",
+    );
+    root_span.record("error.msg", tracing::field::display(e));
+    root_span.record("error.details", tracing::field::debug(e));
+    root_span.record("error.source_chain", error_source_chain(e));
+}
+
+fn error_source_chain(e: &pavex::Error) -> String {
+    use std::error::Error as _;
+    use std::fmt::Write as _;
+
+    let mut chain = String::new();
+    let mut source = e.source();
+    while let Some(s) = source {
+        let _ = writeln!(chain, "- {}", s);
+        source = s.source();
+    }
+    chain
+}
+
+/// A root span is the top-level *logical* span for an incoming request.
 ///
 /// It is not necessarily the top-level *physical* span, as it may be a child of
 /// another span (e.g. a span representing the underlying HTTP connection).
 ///
 /// We use the root span to attach as much information as possible about the
 /// incoming request, and to record the final outcome of the request (success or
-/// failure).  
+/// failure).
 #[derive(Debug, Clone)]
 pub struct RootSpan(tracing::Span);
+
+impl std::ops::Deref for RootSpan {
+    type Target = tracing::Span;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl RootSpan {
     /// Create a new root span for the given request.
@@ -52,6 +91,9 @@ impl RootSpan {
             http.response.status_code = tracing::field::Empty,
             http.route = %matched_route,
             http.target = %request_head.target.path_and_query().map(|p| p.as_str()).unwrap_or(""),
+            error.msg = tracing::field::Empty,
+            error.details = tracing::field::Empty,
+            error.source_chain = tracing::field::Empty,
         );
         Self(span)
     }
