@@ -1,4 +1,5 @@
 use crate::configuration::Config;
+use migration::{Migrator, MigratorTrait};
 use sea_orm::DatabaseBackend::Postgres;
 use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, Statement};
 use std::ops::Deref;
@@ -26,11 +27,16 @@ impl Connection {
         Connection(db)
     }
 
+    pub fn inner(&self) -> &DatabaseConnection {
+        &self.0
+    }
+
     pub async fn new_pavex(config: Arc<Config>) -> Connection {
         let database_url = &config.database.url;
 
         let connection = Self::connect(database_url).await;
 
+        // query (and log) database version
         let version = connection
             .query_one(Statement::from_string(Postgres, "SELECT version()"))
             .await
@@ -40,6 +46,11 @@ impl Connection {
             .expect("cannot get pg version (no column)");
 
         tracing::info!("Connected to the database ({version})");
+
+        // apply migrations
+        Migrator::up(connection.inner(), None)
+            .await
+            .expect("cannot apply migrations");
 
         connection
     }

@@ -9,6 +9,9 @@ path = "src/bin/bp.rs"
 name = "bp"
 
 [dependencies]
+entity = { path = "../entity" }
+migration = { path = "../migration" }
+
 cargo_px_env = "0.1"
 pavex = { version = "0.1.16" }
 pavex_cli_client = { version = "0.1.13" }
