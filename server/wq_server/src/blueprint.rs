@@ -21,7 +21,6 @@ pub fn blueprint() -> Blueprint {
         f!(crate::app::db::Connection::new_pavex),
         Lifecycle::Singleton,
     ).cloning(CloningStrategy::CloneIfNecessary);
-    bp.constructor(f!(crate::app::App::pavex_task_sender), Lifecycle::Singleton).cloning(CloningStrategy::CloneIfNecessary);
     bp.constructor(f!(crate::app::queue::new), Lifecycle::Singleton);
 
     bp.route(GET, "/", f!(crate::routes::root));
