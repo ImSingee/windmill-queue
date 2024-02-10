@@ -106,9 +106,7 @@ pub async fn new(config: Arc<Config>, db: Connection) -> NewEventsProducer {
     });
 
     let processor = Processor::new(db.clone());
-    tokio::spawn(async move {
-        processor.start().await;
-    });
+    processor.starts(4); // TODO support configure count
 
     producer
 }
