@@ -13,6 +13,7 @@ use sea_orm::{ActiveValue, EntityTrait};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::Arc;
+use crate::app::mqueue::Processor;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct NewEvents {
@@ -86,7 +87,7 @@ pub async fn new(config: Arc<Config>, db: Connection) -> NewEventsProducer {
     let producer = storage.clone();
 
     let locker = EventLocker::new();
-
+    let cloned_db = db.clone();
     tokio::spawn(async move {
         Monitor::new()
             .register_with_count(4, move |index| {
@@ -95,13 +96,18 @@ pub async fn new(config: Arc<Config>, db: Connection) -> NewEventsProducer {
                 WorkerBuilder::new(format!("wq-new-events-worker-{index}"))
                     .layer(TraceLayer::new())
                     .layer(Extension(locker.clone()))
-                    .layer(Extension(db.clone()))
+                    .layer(Extension(cloned_db.clone()))
                     .with_storage(storage.clone())
                     .build_fn(on_new_events)
             })
             .run()
             .await
             .expect("queue monitor run failed");
+    });
+
+    let processor = Processor::new(db.clone());
+    tokio::spawn(async move {
+        processor.start().await;
     });
 
     producer
