@@ -62,8 +62,6 @@ async fn on_new_events(NewEvents { events, meta }: NewEvents, ctx: JobContext) -
 
     let db = ctx.data::<Connection>().unwrap();
 
-    // TODO filter out duplicate events
-
     events::Entity::insert_many(events)
         .on_conflict(
             OnConflict::columns([events::Column::Queue, events::Column::Id])
