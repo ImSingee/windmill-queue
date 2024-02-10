@@ -1,9 +1,11 @@
 use crate::configuration::Config;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::DatabaseBackend::Postgres;
-use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, Statement};
+use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseConnection, DbErr, Statement};
 use std::ops::Deref;
 use std::sync::Arc;
+
+pub use sea_orm;
 
 #[derive(Clone)]
 pub struct Connection(DatabaseConnection);
@@ -32,6 +34,10 @@ impl Connection {
         &self.0
     }
 
+    pub async fn migrate(&self) -> Result<(), DbErr> {
+        Migrator::up(self.inner(), None).await
+    }
+
     pub async fn new_pavex(config: Arc<Config>) -> Connection {
         let database_url = &config.database.url;
 
@@ -49,9 +55,7 @@ impl Connection {
         tracing::info!("Connected to the database ({version})");
 
         // apply migrations
-        Migrator::up(connection.inner(), None)
-            .await
-            .expect("cannot apply migrations");
+        connection.migrate().await.expect("cannot apply migrations");
 
         connection
     }
