@@ -2,7 +2,7 @@ use crate::helpers::{ResponseExt, TestApi};
 use pavex::http::StatusCode;
 use serde_json::json;
 use wq_server::app::db::sea_orm::DatabaseBackend::Postgres;
-use wq_server::app::db::sea_orm::{ConnectionTrait, Statement};
+use wq_server::app::db::sea_orm::{ConnectionTrait, EntityTrait, Statement};
 
 #[tokio::test]
 async fn insert_events_works() {
@@ -68,6 +68,61 @@ async fn insert_events_works() {
         .try_get_by_index::<i64>(0)
         .unwrap();
     assert_eq!(count, 4);
+}
+
+#[tokio::test]
+async fn insert_events_de_duplicate() {
+    let api = TestApi::spawn().await;
+
+    let response = api
+        .ingest_events(json!({
+            "events": [
+                {
+                    "event": {},
+                    "meta": {
+                        "id": "test1",
+                        "ts": 1,
+                    }
+                },
+                {
+                    "event": {},
+                    "meta": {
+                         "id": "test1",
+                         "ts": 2,
+                    }
+                },
+                {
+                    "event": {
+                        "id": "test1"
+                    },
+                    "meta": {
+                        "idKey": "id",
+                        "ts": 3,
+                    }
+                },
+            ],
+            "meta": {
+                "queue": "test",
+            }
+        }))
+        .await;
+
+    let status = response.status();
+
+    assert_eq!(status.as_u16(), StatusCode::OK.as_u16());
+
+    // wait 100ms for executor to process the events
+    tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+
+    let results = entity::events::Entity::find()
+        .all(api.db.inner())
+        .await
+        .unwrap();
+    assert_eq!(results.len(), 1);
+
+    let result = results.first().unwrap();
+
+    assert_eq!(result.ts.timestamp_millis(), 1);
 }
 
 #[tokio::test]

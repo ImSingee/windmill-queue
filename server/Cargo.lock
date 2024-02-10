@@ -4765,6 +4765,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dotenvy",
+ "entity",
  "figment",
  "pavex",
  "reqwest",
