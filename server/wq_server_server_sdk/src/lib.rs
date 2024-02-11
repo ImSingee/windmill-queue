@@ -16,7 +16,7 @@ pub async fn build_application_state(
     let v2 = <alloc::sync::Arc<
         wq_server::configuration::Config,
     > as core::clone::Clone>::clone(&v1);
-    let v3 = wq_server::app::db::Connection::new_pavex(v1).await;
+    let v3 = wq_server::app::db::DB::new_pavex(v1).await;
     let v4 = wq_server::app::queue::new(v2, v3).await;
     crate::ApplicationState { s0: v4 }
 }

@@ -18,7 +18,7 @@ pub fn blueprint() -> Blueprint {
 
     bp.constructor(f!(crate::configuration::Config::new_pavex), Lifecycle::Singleton).cloning(CloningStrategy::CloneIfNecessary);
     bp.constructor(
-        f!(crate::app::db::Connection::new_pavex),
+        f!(crate::app::db::DB::new_pavex),
         Lifecycle::Singleton,
     ).cloning(CloningStrategy::CloneIfNecessary);
     bp.constructor(f!(crate::app::queue::new), Lifecycle::Singleton);

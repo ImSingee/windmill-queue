@@ -1,5 +1,8 @@
-use crate::app::db::Connection;
+use crate::app::db::models::NewQueue;
+use crate::app::db::schema::queue;
+use crate::app::db::DB;
 use crate::app::event_locker::EventLocker;
+use crate::app::mqueue::Processor;
 use crate::app::queue_events::{EventWithMeta, EventsMeta};
 use crate::configuration::Config;
 use anyhow::Result;
@@ -7,13 +10,11 @@ use apalis::layers::{Extension, TraceLayer};
 use apalis::postgres::PostgresStorage;
 use apalis::prelude::{Job, JobContext, Monitor, WithStorage, WorkerBuilder, WorkerFactoryFn};
 use chrono::NaiveDateTime;
-use entity::events;
-use sea_orm::sea_query::OnConflict;
-use sea_orm::{ActiveValue, EntityTrait};
+use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::sync::Arc;
-use crate::app::mqueue::Processor;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct NewEvents {
@@ -32,7 +33,7 @@ async fn on_new_events(NewEvents { events, meta }: NewEvents, ctx: JobContext) -
     let locker = ctx.data::<EventLocker>().unwrap().clone();
 
     tracing::debug!("acquire lock for queue {queue}");
-    let guard = locker.lock_for(queue.clone()).await;
+    let _guard = locker.lock_for(queue.clone()).await;
     tracing::debug!("got lock for queue {queue}");
 
     tracing::info!("Received {} new events in queue {queue}", events.len());
@@ -44,39 +45,40 @@ async fn on_new_events(NewEvents { events, meta }: NewEvents, ctx: JobContext) -
         return Ok(());
     }
 
-    let events = events.into_iter().map(|e| {
-        let ts = NaiveDateTime::from_timestamp_millis(e.meta.ts as i64).unwrap();
+    let events: Vec<NewQueue> = events
+        .into_iter()
+        .map(|e| {
+            let ts = NaiveDateTime::from_timestamp_millis(e.meta.ts as i64).unwrap();
 
-        let event = json!(e.event);
-        let meta = json!(e.meta);
+            let event = json!(e.event);
+            let meta = json!(e.meta);
 
-        events::ActiveModel {
-            queue: ActiveValue::Set(queue.clone()),
-            id: ActiveValue::Set(e.meta.id),
-            trace_id: ActiveValue::Set(e.meta.trace_id),
-            event: ActiveValue::Set(event),
-            meta: ActiveValue::Set(meta),
-            ts: ActiveValue::Set(ts),
-            ..Default::default()
-        }
-    });
+            NewQueue {
+                uuid: Uuid::now_v7(),
+                ref_queue: queue.clone(),
+                ref_id: e.meta.id,
+                trace_id: e.meta.trace_id,
+                event,
+                meta,
+                ts,
+            }
+        })
+        .collect();
 
-    let db = ctx.data::<Connection>().unwrap();
+    let db = ctx.data::<DB>().unwrap();
+    let mut conn = db.conn().await?;
 
-    events::Entity::insert_many(events)
-        .on_conflict(
-            OnConflict::columns([events::Column::Queue, events::Column::Id])
-                .do_nothing()
-                .to_owned(),
-        )
-        .exec(db.inner())
+    diesel::insert_into(queue::table)
+        .values(events)
+        .on_conflict((queue::ref_queue, queue::ref_id))
+        .do_nothing()
+        .execute(&mut conn)
         .await?;
 
-    drop(guard);
     Ok(())
 }
 
-pub async fn new(config: Arc<Config>, db: Connection) -> NewEventsProducer {
+pub async fn new(config: Arc<Config>, db: DB) -> NewEventsProducer {
     let database_url = &config.database.url;
     let pg: PostgresStorage<NewEvents> = PostgresStorage::connect(database_url).await.unwrap();
     pg.setup()

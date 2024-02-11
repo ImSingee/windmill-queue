@@ -14,7 +14,6 @@ pavex = { version = "0.1.17" }
 tokio = { version = "1", features = ["full"] }
 wq_server_server_sdk = { path = "../wq_server_server_sdk" }
 wq_server = { path = "../wq_server" }
-entity = { path = "../entity" }
 
 # Configuration
 dotenvy = "0.15"

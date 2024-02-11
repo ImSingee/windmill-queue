@@ -1,13 +1,14 @@
-use crate::app::db::Connection;
+use crate::app::db::models::Queue;
+use crate::app::db::DB;
 use thiserror::Error;
 
 #[derive(Clone)]
 pub struct Processor {
-    db: Connection,
+    db: DB,
 }
 
 impl Processor {
-    pub fn new(db: Connection) -> Self {
+    pub fn new(db: DB) -> Self {
         Self { db }
     }
 
@@ -32,7 +33,7 @@ impl Processor {
         }
     }
 
-    async fn get_event(&self) -> Option<entity::Events> {
+    async fn get_event(&self) -> Option<Queue> {
         unimplemented!()
 
         // let result = self
@@ -62,7 +63,7 @@ impl Processor {
         // result.unwrap_or_else(|_| None)
     }
 
-    async fn mark_event_as_processed(&self, event: entity::Events) -> Result<(), ProcessorError> {
+    async fn mark_event_as_processed(&self, event: Queue) -> Result<(), ProcessorError> {
         unimplemented!()
     }
 }

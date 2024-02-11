@@ -1,8 +1,11 @@
 use crate::helpers::{ResponseExt, TestApi};
 use pavex::http::StatusCode;
 use serde_json::json;
-use wq_server::app::db::sea_orm::DatabaseBackend::Postgres;
-use wq_server::app::db::sea_orm::{ConnectionTrait, EntityTrait, Statement};
+use wq_server::app::db::diesel::dsl::count_star;
+use wq_server::app::db::diesel::prelude::*;
+use wq_server::app::db::diesel_async::RunQueryDsl;
+use wq_server::app::db::models;
+use wq_server::app::db::schema::queue;
 
 #[tokio::test]
 async fn insert_events_works() {
@@ -56,17 +59,13 @@ async fn insert_events_works() {
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
     // check if events are inserted
-    let count = api
-        .db
-        .query_one(Statement::from_string(
-            Postgres,
-            "SELECT COUNT(*) FROM events",
-        ))
+    let mut conn = api.db.conn().await.expect("Failed to get connection");
+    let count: i64 = queue::table
+        .select(count_star())
+        .first(&mut conn)
         .await
-        .unwrap()
-        .unwrap()
-        .try_get_by_index::<i64>(0)
-        .unwrap();
+        .expect("Failed to count events");
+
     assert_eq!(count, 4);
 }
 
@@ -114,15 +113,15 @@ async fn insert_events_de_duplicate() {
     // wait 100ms for executor to process the events
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
-    let results = entity::events::Entity::find()
-        .all(api.db.inner())
-        .await
-        .unwrap();
-    assert_eq!(results.len(), 1);
+    // TODO
+    let mut conn = api.db.conn().await.expect("Failed to get connection");
+    let all = models::Queue::all().load(&mut conn).await.unwrap();
 
-    let result = results.first().unwrap();
+    assert_eq!(all.len(), 1);
 
-    assert_eq!(result.ts.timestamp_millis(), 1);
+    let first = &all[0];
+
+    assert_eq!(first.ts.timestamp_millis(), 1);
 }
 
 #[tokio::test]

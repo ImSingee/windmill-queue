@@ -1,7 +1,8 @@
 use pavex::server::Server;
 use serde::{Deserialize, Serialize};
-use wq_server::app::db::sea_orm::ConnectionTrait;
-use wq_server::app::db::Connection;
+use wq_server::app::db::diesel;
+use wq_server::app::db::diesel_async::RunQueryDsl;
+use wq_server::app::db::DB;
 use wq_server::configuration::Config;
 use wq_server_server::configuration::{load_configuration, ApplicationProfile};
 use wq_server_server_sdk::{build_application_state, run};
@@ -9,7 +10,7 @@ use wq_server_server_sdk::{build_application_state, run};
 pub struct TestApi {
     pub api_address: String,
     pub api_client: reqwest::Client,
-    pub db: Connection,
+    pub db: DB,
 }
 
 impl TestApi {
@@ -46,28 +47,30 @@ impl TestApi {
     }
 }
 
-async fn test_db(database_url: &str) -> (String, Connection) {
+async fn test_db(database_url: &str) -> (String, DB) {
     let suffix = format!("_test_{}", uuid::Uuid::now_v7());
     let mut database_name = database_url.split("/").last().unwrap().to_string();
     database_name.push_str(&suffix);
 
     // Create database
-    let conn = Connection::connect(&database_url).await;
-    conn.execute_unprepared(&format!(r#"CREATE DATABASE "{}";"#, database_name))
+    let db = DB::connect(&database_url);
+    let mut conn = db.conn().await.expect("Failed to get connection");
+    diesel::sql_query(format!(r#"CREATE DATABASE "{}";"#, database_name))
+        .execute(&mut conn)
         .await
         .expect("Failed to create database.");
 
     // Connect to created database
     let database_url = format!("{}{}", database_url, suffix);
-    let connection = Connection::connect(&database_url).await;
 
     // Migrate the created database
-    connection
-        .migrate()
+    DB::migrate(&database_url)
         .await
         .expect("Failed to migrate database.");
 
-    (database_url, connection)
+    let db = DB::connect(&database_url);
+
+    (database_url, db)
 }
 
 /// Convenient methods for calling the API under test.

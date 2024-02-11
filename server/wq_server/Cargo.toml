@@ -9,9 +9,6 @@ path = "src/bin/bp.rs"
 name = "bp"
 
 [dependencies]
-entity = { path = "../entity" }
-migration = { path = "../migration" }
-
 cargo_px_env = "0.1"
 pavex = { version = "0.1.17" }
 pavex_cli_client = { version = "0.1.13" }
@@ -28,5 +25,8 @@ apalis = { version = "0.4.9", features = ["postgres", "extensions"] }
 ulid = "1.1.2"
 utoipa = "4.2.0"
 utoipa-swagger-ui = "6.0.0"
-sea-orm = { version = "0.12.14", features = ["macros", "runtime-tokio-rustls", "sqlx-postgres", "debug-print"] }
 uuid = { version = "1.7.0", features = ["v7"] }
+diesel = { version = "2.1.4", features = ["chrono", "postgres_backend", "uuid", "serde_json", "numeric"] }
+diesel-async = { version = "0.4.1", features = ["tokio", "postgres", "async-connection-wrapper", "deadpool"] }
+diesel_migrations = "2.1.0"
+deadpool = "0.10.0"
